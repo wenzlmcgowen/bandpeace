@@ -23,8 +23,17 @@
   var state = {
     view: "monthly",          // "monthly" | "yearly"
     year: 2026,
-    selected: null,           // Set of category names
+    // Explicitly picked lanes. EMPTY = "All" (every lane shown).
+    // Isolate-on-click: picking a lane from "All" shows ONLY that lane;
+    // picking more lanes adds them; unpicking the last returns to All.
+    selected: new Set(),
     data: null
+  };
+
+  // zero-lanes kept on purpose (honest zeros beat decorative data)
+  var ZERO_LANE_NOTES = {
+    "Merch — in person": "no in-person merch this period",
+    "Other income": "no other income this period"
   };
 
   // ── formatting ─────────────────────────────────────────────────────
@@ -82,7 +91,9 @@
     return out;
   }
 
+  // effective selection: the picked lanes, or ALL lanes when none is picked
   function selectedCats() {
+    if (state.selected.size === 0) return state.data.categories.slice();
     return state.data.categories.filter(function (c) { return state.selected.has(c); });
   }
 
@@ -95,8 +106,9 @@
     all.type = "button";
     all.className = "chip chip-all";
     all.textContent = "All";
+    all.title = "Show every lane";
     all.addEventListener("click", function () {
-      state.selected = new Set(state.data.categories);
+      state.selected.clear();     // empty selection = All
       render();
     });
     host.appendChild(all);
@@ -111,10 +123,12 @@
       sw.style.setProperty("--sw", COLORS[cat]);
       b.appendChild(sw);
       b.appendChild(document.createTextNode(cat));
-      if (cat === "Merch — in person") {
-        b.title = "no in-person merch this period";
+      if (ZERO_LANE_NOTES[cat]) {
+        b.title = ZERO_LANE_NOTES[cat];
       }
       b.addEventListener("click", function () {
+        // isolate-on-click: from "All" this shows ONLY this lane; further
+        // clicks add/remove lanes; removing the last lane returns to All
         if (state.selected.has(cat)) state.selected.delete(cat);
         else state.selected.add(cat);
         render();
@@ -126,7 +140,7 @@
 
   function syncChips() {
     var host = document.getElementById("chips");
-    var allOn = state.selected.size === state.data.categories.length;
+    var allOn = state.selected.size === 0;
     host.querySelector(".chip-all").setAttribute("aria-pressed", String(allOn));
     host.querySelectorAll(".chip[data-cat]").forEach(function (b) {
       b.setAttribute("aria-pressed", String(state.selected.has(b.dataset.cat)));
@@ -429,13 +443,15 @@
       sub.textContent = "SIMULATED · Fly Asshole LLC · EIN 00‑0000000";
       card.appendChild(sub);
 
+      // honest arithmetic order: gross − deductions = net,
+      // with SE tax visually separated below (it's computed FROM net,
+      // it is not part of the subtraction)
       var lines = document.createElement("div");
       lines.className = "tax-lines";
       [
-        ["Gross receipts", s.gross_receipts, false],
-        ["Total deductions", -s.total_deductions, false],
-        ["Self-employment tax", -s.se_tax, false],
-        ["Net profit", s.net_profit, true]
+        ["Gross receipts", fmt(s.gross_receipts), false],
+        ["− Deductions", "− " + fmt(s.total_deductions), false],
+        ["= Net profit", fmt(s.net_profit), true]
       ].forEach(function (t) {
         var line = document.createElement("div");
         line.className = "tax-line" + (t[2] ? " big" : "");
@@ -443,11 +459,21 @@
         lbl.textContent = t[0];
         var amt = document.createElement("span");
         amt.className = "amt";
-        amt.textContent = fmt(t[1]);
+        amt.textContent = t[1];
         line.appendChild(lbl); line.appendChild(amt);
         lines.appendChild(line);
       });
       card.appendChild(lines);
+
+      var se = document.createElement("div");
+      se.className = "tax-line tax-se";
+      var seLbl = document.createElement("span");
+      seLbl.textContent = "Self-employment tax (computed from net)";
+      var seAmt = document.createElement("span");
+      seAmt.className = "amt";
+      seAmt.textContent = fmt(s.se_tax);
+      se.appendChild(seLbl); se.appendChild(seAmt);
+      card.appendChild(se);
 
       var note = document.createElement("p");
       note.className = "tax-note";
@@ -506,7 +532,7 @@
     })
     .then(function (d) {
       state.data = d;
-      state.selected = new Set(d.categories);
+      state.selected = new Set();   // empty = All lanes
 
       // 3-year gross stat in the profile
       var gross = 0;
@@ -516,6 +542,12 @@
       });
       document.getElementById("stat-gross").textContent =
         "$" + Math.round(gross / 1000) + "K";
+      // avg monthly streams — computed by scripts/export_data.py from the
+      // sim's distributor statements (198,874 for seed 42 / 36 months)
+      if (d.meta.avg_monthly_streams) {
+        document.getElementById("stat-streams").textContent =
+          Math.round(d.meta.avg_monthly_streams / 1000) + "K";
+      }
       document.getElementById("footer-year").textContent =
         d.meta.generated ? d.meta.generated.slice(0, 4) : "2026";
 

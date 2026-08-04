@@ -139,7 +139,10 @@
         <span class="member"><span class="member-dot" aria-hidden="true"></span>Ray “Buzz” Delgado — sax, live electronics</span>
       </div>
       <dl class="stats-row">
-        <div class="stat"><dt>Monthly listeners</dt><dd>121K</dd></div>
+        <!-- injected by app.js from data.json meta.avg_monthly_streams
+             (computed by scripts/export_data.py from the sim's distributor
+             statements: 198,874 for seed 42 / 36 months) -->
+        <div class="stat"><dt>Avg monthly streams</dt><dd id="stat-streams">199K</dd></div>
         <div class="stat"><dt>Shows played</dt><dd>40</dd></div>
         <div class="stat"><dt>Catalog</dt><dd>5 tracks</dd></div>
         <div class="stat"><dt>3-yr gross</dt><dd id="stat-gross">$124K</dd></div>
@@ -188,6 +191,7 @@
           <caption class="visually-hidden">Income by category, expenses and net profit</caption>
         </table>
       </div>
+      <p class="table-footnote">Totals computed from exact cents, then rounded — may differ from summing rounded cells by a dollar or two.</p>
     </div>
   </section>
 
@@ -227,12 +231,6 @@
       <a class="dl-btn glass" href="data.json" id="dl-json" download="data.json">
         <span class="dl-name">Full dataset</span><span class="dl-type">.json · everything on this page</span>
       </a>
-    </div>
-    <div class="sheets-row">
-      <a class="sheets-btn" href="https://docs.google.com/spreadsheets/d/1IFoN3HS4B8iVM-cDdlsDsj-fDteJHf1CN8gojl4_gfE/edit" target="_blank" rel="noopener">
-        Open in Google Sheets ↗
-      </a>
-      <p class="sheets-note">viewing may require access</p>
     </div>
   </section>
 </main>

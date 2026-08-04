@@ -69,6 +69,9 @@ python3 -m http.server 8823
 
 ## Notes
 
+- Lane chips use isolate-on-click semantics: from "All", clicking a lane
+  shows only that lane; further clicks add/remove lanes; removing the last
+  lane (or clicking "All") returns to every lane.
 - The chart is a hand-rolled SVG stacked bar chart with a net-profit line;
   the series palette is an 8-slot colorblind-validated dark palette, distinct
   from the neon brand gradient.

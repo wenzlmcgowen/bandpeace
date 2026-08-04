@@ -339,13 +339,23 @@ section { padding-bottom: 84px; }
   flex: none;
 }
 
-.chip[aria-pressed="true"] { color: var(--ink); border-color: rgba(255, 255, 255, 0.32); }
+/* active state — unmistakable: neon-tinted fill + glow. An unpressed chip
+   keeps its normal look (in "All" mode no lane chip is pressed). */
+.chip[aria-pressed="true"] {
+  color: var(--ink);
+  border-color: var(--accent-a);
+  background: linear-gradient(100deg,
+    rgba(255, 62, 200, 0.22), rgba(143, 75, 255, 0.16), rgba(47, 212, 230, 0.22));
+  box-shadow: 0 0 14px rgba(255, 62, 200, 0.30);
+}
 
-.chip[aria-pressed="false"] { opacity: 0.5; }
-
-.chip[aria-pressed="false"] .swatch { background: var(--ink-3); }
-
-.chip.chip-all[aria-pressed="true"] { border-color: var(--accent-b); }
+.chip.chip-all[aria-pressed="true"] {
+  background: var(--grad);
+  color: #08060c;
+  border-color: transparent;
+  font-weight: 700;
+  box-shadow: 0 0 16px rgba(255, 62, 200, 0.40);
+}
 
 /* ── chart ──────────────────────────────────────────────────────── */
 .chart-card { position: relative; padding: 20px 18px 10px; background: var(--surface); }
@@ -398,6 +408,12 @@ section { padding-bottom: 84px; }
 
 /* ── table ──────────────────────────────────────────────────────── */
 .table-card { margin-top: 18px; padding: 6px; }
+
+.table-footnote {
+  color: var(--ink-3);
+  font-size: 0.74rem;
+  padding: 10px 14px 8px;
+}
 
 .table-scroll { overflow-x: auto; }
 
@@ -479,6 +495,15 @@ section { padding-bottom: 84px; }
   color: transparent;
 }
 
+/* SE tax sits apart from the gross − deductions = net arithmetic:
+   it's computed FROM net, not part of the subtraction */
+.tax-line.tax-se {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--glass-border);
+  font-size: 0.82rem;
+}
+
 .tax-note {
   margin-top: 14px;
   font-size: 0.7rem;
@@ -519,23 +544,6 @@ section { padding-bottom: 84px; }
 .dl-name { font-family: var(--display); font-weight: 700; font-size: 1.08rem; color: var(--ink); text-transform: uppercase; letter-spacing: 0.04em; }
 
 .dl-type { font-size: 0.76rem; color: var(--ink-3); }
-
-.sheets-row { margin-top: 22px; display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
-
-.sheets-btn {
-  display: inline-block;
-  background: var(--grad);
-  color: #08060c;
-  font-weight: 700;
-  font-size: 0.9rem;
-  text-decoration: none;
-  border-radius: 999px;
-  padding: 11px 24px;
-}
-
-.sheets-btn:hover { filter: brightness(1.1); }
-
-.sheets-note { font-size: 0.74rem; color: var(--ink-3); }
 
 /* ── footer ─────────────────────────────────────────────────────── */
 .site-footer { border-top: 1px solid var(--glass-border); padding: 26px 0 40px; }

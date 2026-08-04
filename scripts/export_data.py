@@ -38,7 +38,7 @@ from bandsim.money.expenses import simulate_expenses        # noqa: E402
 from bandsim.money.payment_apps import PaymentApp, simulate_app_activity  # noqa: E402
 from bandsim.streams.base import Song                       # noqa: E402
 from bandsim.streams.rights_engine import RightsEngine      # noqa: E402
-from bandsim.tax.schedule_c import SE_NET_MULTIPLIER, SE_TAX_RATE  # noqa: E402
+from bandsim.tax.schedule_c import SE_NET_MULTIPLIER, SE_TAX_RATE, build_filing  # noqa: E402
 
 SITE = Path(__file__).resolve().parent.parent / "site"
 FILES = SITE / "files"
@@ -149,11 +149,33 @@ def run_sim():
     hub = QuickHooks()
     hub.ingest_accounts([checking, credit])
     hub.ingest_apps(list(apps.values()))
-    return clock, hub, landed
+    return clock, hub, landed, engine
+
+
+def avg_monthly_streams(statements) -> int:
+    """Average monthly streams across the whole run, straight from the
+    distributor statements (store lines only — the appended 'download ·' /
+    'video ·' rights lines are not streams)."""
+    units = sum(
+        line.units
+        for st in statements
+        if st.stream_name in DISTRIBUTOR_STREAMS
+        for line in st.lines
+        if "·" not in line.source
+    )
+    return round(units / MONTHS)
 
 
 def schedule_c_summary(hub: QuickHooks, year: int) -> dict:
-    """Refactor-free recompute of bandsim.tax.schedule_c.build_filing math."""
+    """Recompute of bandsim.tax.schedule_c.build_filing math.
+
+    DUPLICATION WARNING: this mirrors the math inside
+    bandsim/tax/schedule_c.py::build_filing (which computes and writes its txt
+    in one function, so the math cannot be imported alone without refactoring
+    bandsim). To keep the two from silently diverging, main() ALSO runs the
+    real build_filing and cross-checks the numbers parsed from its output
+    against this recompute — any mismatch fails the export (see
+    cross_check_schedule_c below)."""
     gross = hub.business_income(year)
     cat_totals = hub.totals_by_category(year)
     lines: dict[str, tuple[str, float]] = {}
@@ -180,6 +202,35 @@ def schedule_c_summary(hub: QuickHooks, year: int) -> dict:
     }
 
 
+def cross_check_schedule_c(hub: QuickHooks, summary: dict, scratch: Path) -> bool:
+    """Run the REAL bandsim build_filing and verify our recompute matches it.
+
+    This is the guard against the duplication documented on
+    schedule_c_summary: gross, total deductions, net profit and SE tax are
+    parsed from build_filing's own output and compared to the penny."""
+    import re
+    year = summary["year"]
+    txt = build_filing(hub, year, scratch).read_text()
+
+    def grab(pattern: str) -> float:
+        m = re.search(pattern + r"\.*\s*\$\s*([\d,]+\.\d{2})", txt)
+        return float(m.group(1).replace(",", "")) if m else float("nan")
+
+    pairs = [
+        ("gross_receipts", grab(r"Line 1  Gross receipts")),
+        ("total_deductions", grab(r"Line 28 Total expenses")),
+        ("net_profit", grab(r"Line 31 NET PROFIT \(or loss\)")),
+        ("se_tax", grab(r"SE tax \(x [\d.]+\)")),
+    ]
+    ok = True
+    for key, theirs in pairs:
+        if abs(summary[key] - theirs) > 0.005:
+            ok = False
+            print(f"  SCHEDULE C CROSS-CHECK MISMATCH {year} {key}: "
+                  f"recompute {summary[key]} vs build_filing {theirs}")
+    return ok
+
+
 def write_schedule_c_txt(summary: dict, path: Path) -> None:
     year = summary["year"]
     with open(path, "w") as f:
@@ -204,7 +255,7 @@ def write_schedule_c_txt(summary: dict, path: Path) -> None:
 
 
 def main() -> int:
-    clock, hub, landed = run_sim()
+    clock, hub, landed, engine = run_sim()
 
     # ── income rows by bucket ────────────────────────────────────────────
     # (year, month, bucket) -> amount
@@ -276,13 +327,23 @@ def main() -> int:
 
     # ── schedule C summaries + txt files ─────────────────────────────────
     FILES.mkdir(parents=True, exist_ok=True)
+    scratch = Path(__file__).resolve().parent / ".schedule_c_crosscheck"
+    scratch.mkdir(exist_ok=True)
     schedules = {}
     for y in YEARS:
         s = schedule_c_summary(hub, y)
+        if not cross_check_schedule_c(hub, s, scratch):
+            print("SCHEDULE C CROSS-CHECK FAILED — data.json NOT written.")
+            return 1
         schedules[str(y)] = s
         write_schedule_c_txt(s, FILES / f"schedule_c_{y}_SIMULATED.txt")
         print(f"  Schedule C {y}: gross ${s['gross_receipts']:,.2f}  deductions "
-              f"${s['total_deductions']:,.2f}  net ${s['net_profit']:,.2f}  SE tax ${s['se_tax']:,.2f}")
+              f"${s['total_deductions']:,.2f}  net ${s['net_profit']:,.2f}  SE tax ${s['se_tax']:,.2f}"
+              f"  [matches bandsim build_filing]")
+    shutil.rmtree(scratch, ignore_errors=True)
+
+    streams_avg = avg_monthly_streams(engine.statements)
+    print(f"  avg monthly streams (distributor store lines / {MONTHS} months): {streams_avg:,}")
 
     # ── copy artifacts from the sim's out/ dir ───────────────────────────
     for name in ("pnl_2026.xlsx", "royalty_map_2026.csv"):
@@ -300,6 +361,7 @@ def main() -> int:
             "months": MONTHS,
             "years": YEARS,
             "simulated": True,
+            "avg_monthly_streams": streams_avg,
             "note": "All figures are simulated fiction generated by bandsim. Fictional demo band.",
         },
         "categories": BUCKETS,
