@@ -23,9 +23,12 @@
   var state = {
     view: "monthly",          // "monthly" | "yearly"
     year: 2026,
-    // Explicitly picked lanes. EMPTY = "All" (every lane shown).
-    // Isolate-on-click: picking a lane from "All" shows ONLY that lane;
-    // picking more lanes adds them; unpicking the last returns to All.
+    // Wenzl's toggle model (2026-08-04): "Total" and individual lanes are a
+    // real toggle. mode "total" = the Total chip is pressed, every lane shows,
+    // curve = total income. mode "lanes" = only the picked lanes show, curve =
+    // their summed income; picking a lane from Total unpresses Total; an empty
+    // pick in lanes mode legitimately shows a zero curve (nothing highlighted).
+    mode: "total",            // "total" | "lanes"
     selected: new Set(),
     data: null
   };
@@ -91,10 +94,18 @@
     return out;
   }
 
-  // effective selection: the picked lanes, or ALL lanes when none is picked
+  // effective selection: every lane in Total mode; the picked lanes (possibly
+  // none — a legitimate empty state) in lanes mode
   function selectedCats() {
-    if (state.selected.size === 0) return state.data.categories.slice();
+    if (state.mode === "total") return state.data.categories.slice();
     return state.data.categories.filter(function (c) { return state.selected.has(c); });
+  }
+
+  // the curve follows the selection: income of what's highlighted, $0 when nothing is
+  function selIncome(p, cats) {
+    var s = 0;
+    cats.forEach(function (c) { s += p.byCat[c]; });
+    return s;
   }
 
   // ── chips (filter + legend in one) ─────────────────────────────────
@@ -105,10 +116,11 @@
     var all = document.createElement("button");
     all.type = "button";
     all.className = "chip chip-all";
-    all.textContent = "All";
-    all.title = "Show every lane";
+    all.textContent = "Total";
+    all.title = "Show total income — unpresses the individual lanes";
     all.addEventListener("click", function () {
-      state.selected.clear();     // empty selection = All
+      state.mode = "total";       // Total pressed → all lanes unpressed
+      state.selected.clear();
       render();
     });
     host.appendChild(all);
@@ -127,10 +139,17 @@
         b.title = ZERO_LANE_NOTES[cat];
       }
       b.addEventListener("click", function () {
-        // isolate-on-click: from "All" this shows ONLY this lane; further
-        // clicks add/remove lanes; removing the last lane returns to All
-        if (state.selected.has(cat)) state.selected.delete(cat);
-        else state.selected.add(cat);
+        // toggle model: picking a lane leaves Total mode and isolates it;
+        // further clicks add/remove lanes. Removing every lane is allowed —
+        // the curve drops to zero until Total (or a lane) is pressed again.
+        if (state.mode === "total") {
+          state.mode = "lanes";
+          state.selected = new Set([cat]);
+        } else if (state.selected.has(cat)) {
+          state.selected.delete(cat);
+        } else {
+          state.selected.add(cat);
+        }
         render();
       });
       host.appendChild(b);
@@ -140,10 +159,10 @@
 
   function syncChips() {
     var host = document.getElementById("chips");
-    var allOn = state.selected.size === 0;
-    host.querySelector(".chip-all").setAttribute("aria-pressed", String(allOn));
+    host.querySelector(".chip-all").setAttribute("aria-pressed", String(state.mode === "total"));
     host.querySelectorAll(".chip[data-cat]").forEach(function (b) {
-      b.setAttribute("aria-pressed", String(state.selected.has(b.dataset.cat)));
+      b.setAttribute("aria-pressed",
+        String(state.mode === "lanes" && state.selected.has(b.dataset.cat)));
     });
   }
 
@@ -176,16 +195,13 @@
     var M = { l: 62, r: 16, t: 18, b: 36 };
     var plotW = W - M.l - M.r, plotH = H - M.t - M.b;
 
-    var maxStack = 0, minNet = 0, maxNet = 0;
+    var maxStack = 0;
     ps.forEach(function (p) {
-      var s = 0;
-      cats.forEach(function (c) { s += p.byCat[c]; });
+      var s = selIncome(p, cats);
       if (s > maxStack) maxStack = s;
-      if (p.net < minNet) minNet = p.net;
-      if (p.net > maxNet) maxNet = p.net;
     });
-    var yMax = Math.max(maxStack, maxNet, 100);
-    var yMin = Math.min(0, minNet);
+    var yMax = Math.max(maxStack, 100);
+    var yMin = 0;
     var step = niceStep(yMax - yMin);
     yMax = Math.ceil(yMax / step) * step;
     yMin = Math.floor(yMin / step) * step;
@@ -195,7 +211,7 @@
     var svg = el("svg", {
       viewBox: "0 0 " + W + " " + H,
       role: "img",
-      "aria-label": "Stacked bar chart of income by category with a net profit line. The table below holds the same numbers."
+      "aria-label": "Stacked bar chart of income by category. The dotted line traces the income of the selected lanes — total income when the Total chip is pressed, zero when nothing is selected. The table below holds the same numbers."
     }, host);
 
     // gridlines + y labels
@@ -261,13 +277,16 @@
       xl.textContent = p.label;
     });
 
-    // net profit line (always visible; all lanes minus expenses)
+    // the selection curve (Wenzl's toggle model): dotted line tracing the
+    // income of whatever is highlighted — total income in Total mode, the
+    // summed picked lanes otherwise, and a flat zero when nothing is selected
     var pts = ps.map(function (p, i) {
-      return [M.l + slot * (i + 0.5), y(p.net)];
+      return [M.l + slot * (i + 0.5), y(selIncome(p, cats))];
     });
     el("polyline", {
       points: pts.map(function (pt) { return pt.join(","); }).join(" "),
       fill: "none", stroke: "#f3f2f8", "stroke-width": 2,
+      "stroke-dasharray": "7 6",
       "stroke-linejoin": "round", "stroke-linecap": "round"
     }, svg);
     pts.forEach(function (pt) {
@@ -278,13 +297,16 @@
     });
     // direct label on the line's last point
     var lastP = ps[ps.length - 1];
+    var lastIncome = selIncome(lastP, cats);
     var netLbl = el("text", {
       x: pts[pts.length - 1][0], y: pts[pts.length - 1][1] - 12,
       "text-anchor": "end", fill: "#f3f2f8", "font-size": 12,
       "font-weight": 700, "font-family": "system-ui, sans-serif"
     }, svg);
     // month/year-aware so it reads as the last data point, not a period total
-    netLbl.textContent = lastP.label + " net " + fmt(lastP.net);
+    netLbl.textContent = cats.length === 0
+      ? "nothing selected — $0"
+      : lastP.label + " income " + fmt(lastIncome);
 
     // hover targets: one per period, full plot height
     ps.forEach(function (p, i) {
@@ -300,7 +322,7 @@
     // caption
     var scope = state.view === "monthly" ? (state.year + ", monthly") : "2026–2028, yearly";
     document.getElementById("chart-caption").textContent =
-      "Income stacked by lane (" + scope + "). White line = net profit: all income lanes minus business expenses, regardless of filter. Simulated data.";
+      "Income stacked by lane (" + scope + "). Dotted line = income of what's selected: press Total for everything, press lanes to compare sources (nothing selected = zero). Net profit lives in the table below. Simulated data.";
   }
 
   // ── tooltip ────────────────────────────────────────────────────────
@@ -419,7 +441,8 @@
     cats.forEach(function (c) {
       row(c, ps.map(function (p) { return p.byCat[c]; }), { color: COLORS[c] });
     });
-    row("Total income (all lanes)", ps.map(function (p) { return p.incomeAll; }), { total: true });
+    row(state.mode === "total" ? "Total income (all lanes)" : "Total income (selected lanes)",
+        ps.map(function (p) { return selIncome(p, cats); }), { total: true });
     row("Expenses", ps.map(function (p) { return -p.expenses; }));
     row("Net profit", ps.map(function (p) { return p.net; }), { total: true });
 
