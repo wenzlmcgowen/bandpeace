@@ -1,0 +1,21 @@
+SIMULATION — bandsim sandbox. Not real money. Not real royalties.
+Royalty Map — simulated YTD 2026 (net dollars per collector)
+
+,— COMPOSITION SIDE (songwriter/publisher) —,,,— RECORDING SIDE (artist/master owner) —,,,
+Use,ASCAP-sim (PRO),"Songtrust-sim (pub admin, 15%)","HFA-sim (mechanicals, 11.5%, 4-8mo)",Distributor-sims (DistroKid/Symphonic),SoundExchange-sim,Direct-to-band,Row total
+Interactive streaming (Spotify etc.),478.54,610.17,0,7586.92,0,0,8675.63
+Non-interactive (satellite / web radio),74.15,0,0,0,396.59,0,470.74
+"Public performance — US (radio, venues)",1419.27,0,0,0,0,0,1419.27
+Public performance — international,0,409.93,0,0,261.33,0,671.26
+Digital downloads,0,0,133.58,1379.97,0,0,1513.55
+Syncs (film / ad / game licenses),0,2435.13,0,0,0,2864.85,5299.98
+Physical (vinyl / CD pressings),0,0,22.26,0,0,2429.05,2451.31
+Video (YouTube ad revenue),0,146.95,0,809.7,0,0,956.65
+"TOTAL (net, YTD)",1971.96,3602.18,155.84,9776.59,657.92,5293.9,21458.39
+
+Reconciliation (to the penny)
+"Matrix total (net, all statements issued)",21458.39
+  landed in checking this year,18605.69
+"  still in transit (statement issued, payout after year end)",2852.70
+
+US quirk: terrestrial radio pays the songwriter but NOT the recording artist — the recording side of this row is $0 by law.
