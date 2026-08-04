@@ -28,16 +28,16 @@
       { id: "soundexchange", name: "SoundExchange", grabs: "performance + mechanical statements, admin fees" }
     ],
     money: [
-      { id: "bank", name: "Your bank", sub: "Plaid-style connect", grabs: "read-only transactions for gig income + expenses" },
+      { id: "bank", name: "Your bank", grabs: "read-only transactions for gig income + expenses" },
       { id: "venmo", name: "Venmo", grabs: "read-only transactions for gig income + expenses" },
       { id: "paypal", name: "PayPal", grabs: "read-only transactions for gig income + expenses" },
       { id: "zelle", name: "Zelle", grabs: "read-only transactions for gig income + expenses" },
       { id: "stripe", name: "Stripe", grabs: "read-only transactions for gig income + expenses" }
     ],
     stats: [
-      { id: "quickbooks", name: "QuickBooks", grabs: "chart of accounts / listener stats" },
-      { id: "spotify", name: "Spotify for Artists", grabs: "chart of accounts / listener stats" },
-      { id: "youtube", name: "YouTube Studio", grabs: "chart of accounts / listener stats" }
+      { id: "quickbooks", name: "QuickBooks", grabs: "your chart of accounts (your expense categories) + categorized expenses" },
+      { id: "spotify", name: "Spotify for Artists", grabs: "listener + stream stats" },
+      { id: "youtube", name: "YouTube Studio", grabs: "channel + revenue stats" }
     ]
   };
 
@@ -164,11 +164,19 @@
   function openModal(p) {
     modalProvider = p;
     document.getElementById("modal-provider").textContent = p.name;
-    document.getElementById("modal-body").textContent =
-      "In the live product this opens " + p.name + "'s own secure login page. " +
-      "BandPeace never sees your password — " + p.name + " hands us a " +
-      "read-only token that can only READ statements, and you can revoke it " +
-      "there anytime.";
+    var body;
+    if (p.id === "bank") {
+      // the peak-anxiety step gets bespoke plain-English-first copy
+      body = "This connection can READ statements and balances. It can never " +
+        "move money — read-only by design, through a dedicated " +
+        "bank-connection service (like Plaid).";
+    } else {
+      body = "In the live product this opens " + p.name + "'s own secure login page. " +
+        "BandPeace never sees your password — " + p.name + " hands us a " +
+        "read-only token that can only READ statements, and you can revoke it " +
+        "there anytime.";
+    }
+    document.getElementById("modal-body").textContent = body;
     modal.showModal();
   }
 

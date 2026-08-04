@@ -468,6 +468,14 @@ section { padding-bottom: 84px; }
   border-top: 1px solid rgba(255, 255, 255, 0.18);
 }
 
+/* advertising group: subtotal styled like a total, source rows indented */
+#expense-table tr.subtotal-row td { font-weight: 700; color: var(--ink); }
+
+#expense-table tr.sub-row td:first-child {
+  padding-left: 34px;
+  color: var(--ink-3);
+}
+
 .table-scroll { overflow-x: auto; }
 
 #money-table {

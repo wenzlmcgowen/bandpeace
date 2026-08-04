@@ -26,6 +26,14 @@
 
 .principle strong, .principle em { color: var(--ink); font-style: normal; }
 
+.pricing-note { margin-top: 12px; color: var(--ink-3); font-size: 0.85rem; }
+
+.waitlist-note { margin: 0 0 16px; color: var(--ink-2); font-size: 0.88rem; }
+
+.waitlist-note a { color: var(--accent-b); text-decoration: none; }
+
+.waitlist-note a:hover { text-decoration: underline; }
+
 /* ── progress ───────────────────────────────────────────────────── */
 .progress { margin: 34px 0 26px; }
 
@@ -268,7 +276,7 @@
 
 .preview-skeleton .pv-meta { color: var(--ink-2); margin-top: 4px; font-size: 0.92rem; }
 
-.pv-members { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; }
+.pv-members { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; min-width: 0; }
 
 .pv-member {
   font-size: 0.8rem;
@@ -276,7 +284,12 @@
   border: 1px solid var(--glass-border);
   border-radius: 999px;
   padding: 4px 12px;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
+
+/* long unbroken names/chips must never widen the page on mobile */
+.pv-name, .pv-meta { overflow-wrap: anywhere; min-width: 0; }
 
 .pv-sources { margin-top: 20px; }
 
@@ -289,7 +302,7 @@
   margin-bottom: 10px;
 }
 
-.pv-source-list { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; }
+.pv-source-list { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; min-width: 0; }
 
 .pv-source-list li {
   font-size: 0.8rem;
@@ -297,6 +310,8 @@
   border: 1px solid rgba(53, 199, 111, 0.4);
   border-radius: 999px;
   padding: 4px 12px;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .pv-source-list li.pv-none { color: var(--ink-3); border-color: var(--glass-border); }

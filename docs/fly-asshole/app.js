@@ -528,9 +528,12 @@
 
     var tbody = document.createElement("tbody");
 
-    function row(label, values, isTotal) {
+    function row(label, values, opts) {
+      opts = opts || {};
       var tr = document.createElement("tr");
-      if (isTotal) tr.className = "total-row";
+      if (opts.total) tr.className = "total-row";
+      else if (opts.subtotal) tr.className = "subtotal-row";
+      else if (opts.sub) tr.className = "sub-row";
       var td0 = document.createElement("td");
       td0.textContent = label;
       tr.appendChild(td0);
@@ -547,10 +550,35 @@
       tbody.appendChild(tr);
     }
 
-    cats.forEach(function (c) {
-      row(c, ps.map(function (p) { return p.byCat[c]; }), false);
+    // advertising spend is split across two source categories — show them
+    // grouped under one subtotal so "what did we spend on ads" is one row
+    var AD_CATS = ["Meta Ads", "Advertising & Marketing"].filter(function (c) {
+      return cats.indexOf(c) > -1;
     });
-    row("Total expenses", ps.map(function (p) { return p.total; }), true);
+    var entities = cats.filter(function (c) { return AD_CATS.indexOf(c) === -1; })
+      .map(function (c) { return { cat: c, total: scopeTotal[c] }; });
+    if (AD_CATS.length) {
+      entities.push({
+        ads: true,
+        total: AD_CATS.reduce(function (s, c) { return s + scopeTotal[c]; }, 0)
+      });
+    }
+    entities.sort(function (a, b) { return b.total - a.total; });
+
+    entities.forEach(function (e) {
+      if (e.ads) {
+        // subtotal = per-period sum of the two source rows, to the penny
+        row("Advertising (combined)", ps.map(function (p) {
+          return AD_CATS.reduce(function (s, c) { return s + p.byCat[c]; }, 0);
+        }), { subtotal: true });
+        AD_CATS.forEach(function (c) {
+          row(c, ps.map(function (p) { return p.byCat[c]; }), { sub: true });
+        });
+      } else {
+        row(e.cat, ps.map(function (p) { return p.byCat[e.cat]; }));
+      }
+    });
+    row("Total expenses", ps.map(function (p) { return p.total; }), { total: true });
 
     table.appendChild(tbody);
   }
@@ -658,6 +686,7 @@
     by.addEventListener("click", function () { state.view = "yearly"; render(); });
     document.querySelectorAll(".year-btn").forEach(function (b) {
       b.addEventListener("click", function () {
+        if (state.view !== "monthly") return; // belt-and-braces with disabled
         state.year = parseInt(b.dataset.year, 10);
         render();
       });
@@ -668,9 +697,13 @@
     document.getElementById("btn-monthly").setAttribute("aria-pressed", String(state.view === "monthly"));
     document.getElementById("btn-yearly").setAttribute("aria-pressed", String(state.view === "yearly"));
     var yp = document.getElementById("year-picker");
-    yp.classList.toggle("disabled", state.view !== "monthly");
-    yp.setAttribute("aria-disabled", String(state.view !== "monthly"));
+    var yearsOff = state.view !== "monthly";
+    yp.classList.toggle("disabled", yearsOff);
+    yp.setAttribute("aria-disabled", String(yearsOff));
     document.querySelectorAll(".year-btn").forEach(function (b) {
+      // real disabled attribute: keyboard focus/Enter must do nothing in
+      // Yearly mode, not just look off
+      b.disabled = yearsOff;
       b.setAttribute("aria-pressed", String(parseInt(b.dataset.year, 10) === state.year));
     });
   }
