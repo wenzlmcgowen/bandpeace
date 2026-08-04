@@ -1,0 +1,155 @@
+/* BandPeace landing page — builds on shared.css */
+
+/* hero */
+.hero { padding-top: 88px; padding-bottom: 72px; text-align: left; }
+
+.hero-h { font-size: clamp(3rem, 8vw, 5.4rem); }
+
+.hero-pitch {
+  margin-top: 22px;
+  max-width: 58ch;
+  color: var(--ink-2);
+  font-size: 1.08rem;
+}
+
+.hero-ctas { margin-top: 30px; display: flex; flex-wrap: wrap; gap: 14px; }
+
+/* sections */
+section { padding-bottom: 76px; }
+
+.section-head { margin-bottom: 26px; max-width: 62ch; }
+
+.section-h { font-size: clamp(1.8rem, 4.2vw, 2.7rem); }
+
+/* how it works */
+.steps-grid {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 16px;
+  counter-reset: none;
+}
+
+.step-card { padding: 24px 22px; position: relative; }
+
+.step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  background: var(--grad);
+  color: #08060c;
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 1.15rem;
+  margin-bottom: 14px;
+}
+
+.step-card h3, .feature-card h3 {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 1.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 8px;
+}
+
+.step-card p, .feature-card p { color: var(--ink-2); font-size: 0.92rem; }
+
+/* features */
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 16px;
+}
+
+.feature-card { padding: 24px 22px; position: relative; overflow: hidden; }
+
+.feature-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: var(--grad);
+}
+
+/* example profile card */
+.example-card {
+  display: flex;
+  gap: 28px;
+  align-items: center;
+  padding: 26px;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s, transform 0.15s;
+  flex-wrap: wrap;
+}
+
+.example-card:hover { border-color: var(--accent-a); transform: translateY(-2px); }
+
+.example-art {
+  width: 180px;
+  max-width: 100%;
+  flex: none;
+  border-radius: 14px;
+  box-shadow: 0 0 40px rgba(255, 62, 200, 0.18);
+}
+
+.example-info h3 { font-size: 2rem; }
+
+.example-meta { margin-top: 4px; color: var(--ink-2); font-size: 0.9rem; }
+
+.example-stats {
+  margin-top: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 28px;
+}
+
+.example-stats dt {
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ink-3);
+}
+
+.example-stats dd {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 1.45rem;
+}
+
+.example-cta {
+  display: inline-block;
+  margin-top: 16px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--accent-b);
+}
+
+/* trust strip */
+.trust-strip {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 26px;
+  padding: 18px 22px;
+  font-size: 0.88rem;
+  color: var(--ink-2);
+}
+
+.trust-strip li { display: flex; align-items: center; gap: 9px; }
+
+.trust-strip li::before {
+  content: "";
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--grad);
+  flex: none;
+}
+
+.trust-strip strong { color: var(--ink); }
+
+/* final CTA */
+.cta-final { display: flex; flex-wrap: wrap; gap: 14px; padding-bottom: 90px; }

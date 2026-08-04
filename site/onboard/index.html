@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Onboard your band — BandPeace (preview)</title>
+<meta name="description" content="BandPeace onboarding preview: how a band would connect its distributors, PROs, banks, and stats sources — without ever typing a password into BandPeace.">
+<link rel="stylesheet" href="../shared.css">
+<link rel="stylesheet" href="onboard.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23ff3ec8'/%3E%3Cstop offset='1' stop-color='%232fd4e6'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='7' fill='%230a0a0f'/%3E%3Cpath d='M9 24V8h13v4h-8v3h7v4h-7v5z' fill='url(%23g)'/%3E%3C/svg%3E">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a class="home-link" href="../">← BandPeace</a>
+    <a class="wordmark" href="../" aria-label="BandPeace home">
+      <svg class="logo" viewBox="0 0 44 44" aria-hidden="true" focusable="false">
+        <defs>
+          <linearGradient id="bp-grad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#ff3ec8"/><stop offset="1" stop-color="#2fd4e6"/>
+          </linearGradient>
+        </defs>
+        <rect x="1" y="1" width="42" height="42" rx="10" fill="none" stroke="url(#bp-grad)" stroke-width="2"/>
+        <path d="M13 32V12h10a6 6 0 0 1 0 12h-6" fill="none" stroke="url(#bp-grad)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="30.5" cy="29.5" r="3.4" fill="url(#bp-grad)"/>
+      </svg>
+      <span class="wordmark-text">Band<em>Peace</em></span>
+    </a>
+    <p class="tagline">onboarding preview</p>
+    <span class="demo-badge">PREVIEW — nothing is real yet</span>
+  </div>
+</header>
+
+<main class="wrap onboard-main">
+
+  <div class="onboard-head">
+    <p class="kicker">Onboard your band</p>
+    <h1 class="display-h onboard-h">Six steps to <span class="grad-text">open books</span></h1>
+    <p class="principle glass">
+      <strong>The one rule:</strong> you will never type a password, username, or
+      API key into BandPeace — not here, not in the live product. Every
+      connection happens on the <em>provider's</em> own secure page, which hands
+      BandPeace a read-only token you can revoke there anytime. This preview
+      only simulates that handshake; anything you type below stays on your
+      device.
+    </p>
+  </div>
+
+  <!-- progress -->
+  <nav class="progress" aria-label="Onboarding steps">
+    <div class="progress-bar" aria-hidden="true"><div class="progress-fill" id="progress-fill"></div></div>
+    <ol class="progress-steps" id="progress-steps">
+      <li><button type="button" data-step="1">Basics</button></li>
+      <li><button type="button" data-step="2">Distribution</button></li>
+      <li><button type="button" data-step="3">Publishing &amp; PROs</button></li>
+      <li><button type="button" data-step="4">Money accounts</button></li>
+      <li><button type="button" data-step="5">Books &amp; streams</button></li>
+      <li><button type="button" data-step="6">Done</button></li>
+    </ol>
+  </nav>
+
+  <!-- ── STEP 1: band basics ─────────────────────────────────────── -->
+  <section class="step-panel" data-step="1" aria-labelledby="step1-h">
+    <h2 id="step1-h" class="step-h display-h" tabindex="-1">1 · Band basics</h2>
+    <p class="step-sub">Who is this profile for? <span class="local-note">preview — stays on your device</span></p>
+    <form class="basics-form glass" id="basics-form" autocomplete="off">
+      <div class="field">
+        <label for="f-name">Band name</label>
+        <input type="text" id="f-name" name="name" placeholder="e.g. Fly Asshole" maxlength="60">
+      </div>
+      <div class="field">
+        <label for="f-city">City</label>
+        <input type="text" id="f-city" name="city" placeholder="e.g. Los Angeles, CA" maxlength="60">
+      </div>
+      <div class="field">
+        <label for="f-genre">Genre</label>
+        <input type="text" id="f-genre" name="genre" placeholder="e.g. filthy-bass house" maxlength="60">
+      </div>
+      <div class="field field-wide">
+        <label for="f-members">Members <span class="hint">(comma-separated)</span></label>
+        <input type="text" id="f-members" name="members" placeholder="e.g. Moxie Vex, Ray Delgado" maxlength="160">
+      </div>
+    </form>
+  </section>
+
+  <!-- ── STEPS 2–5: provider connect grids (built by onboard.js) ──── -->
+  <section class="step-panel" data-step="2" aria-labelledby="step2-h" hidden>
+    <h2 id="step2-h" class="step-h display-h" tabindex="-1">2 · Distribution</h2>
+    <p class="step-sub">Where your recordings earn. Connections are read-only, made at the provider.</p>
+    <div class="provider-grid" data-group="distribution"></div>
+  </section>
+
+  <section class="step-panel" data-step="3" aria-labelledby="step3-h" hidden>
+    <h2 id="step3-h" class="step-h display-h" tabindex="-1">3 · Publishing &amp; PROs</h2>
+    <p class="step-sub">The composition side — the slow, quarterly money.</p>
+    <div class="provider-grid" data-group="publishing"></div>
+  </section>
+
+  <section class="step-panel" data-step="4" aria-labelledby="step4-h" hidden>
+    <h2 id="step4-h" class="step-h display-h" tabindex="-1">4 · Money accounts</h2>
+    <p class="step-sub">Where gig money lands and expenses leave. Read-only, always.</p>
+    <div class="provider-grid" data-group="money"></div>
+  </section>
+
+  <section class="step-panel" data-step="5" aria-labelledby="step5-h" hidden>
+    <h2 id="step5-h" class="step-h display-h" tabindex="-1">5 · Books &amp; streams</h2>
+    <p class="step-sub">Your existing books and listener stats, if you have them.</p>
+    <div class="provider-grid" data-group="stats"></div>
+  </section>
+
+  <!-- ── STEP 6: done ────────────────────────────────────────────── -->
+  <section class="step-panel" data-step="6" aria-labelledby="step6-h" hidden>
+    <h2 id="step6-h" class="step-h display-h" tabindex="-1">6 · Done — here's the shape of your page</h2>
+    <p class="step-sub">Once live, your page would build itself from these.</p>
+
+    <div class="preview-skeleton glass" id="preview-skeleton">
+      <!-- filled by onboard.js from step-1 inputs + connected sources -->
+    </div>
+
+    <div class="honest-card glass">
+      <h3>Honest closing note</h3>
+      <p>BandPeace is a demo today — no real connections exist yet. The example
+      profile shows what your page becomes.</p>
+      <a class="btn btn-primary" href="../fly-asshole/">See the example profile</a>
+    </div>
+  </section>
+
+  <!-- wizard nav -->
+  <div class="wizard-nav">
+    <button type="button" class="btn btn-ghost" id="btn-back">← Back</button>
+    <span class="wizard-pos" id="wizard-pos" aria-live="polite">Step 1 of 6</span>
+    <button type="button" class="btn btn-primary" id="btn-next">Next →</button>
+  </div>
+  <p class="kbd-hint">Tip: ← / → arrow keys move between steps.</p>
+</main>
+
+<!-- connect modal -->
+<dialog id="connect-modal" class="connect-modal" aria-labelledby="modal-title">
+  <h3 id="modal-title">Connect <span id="modal-provider">Provider</span></h3>
+  <p id="modal-body" class="modal-body"></p>
+  <p class="modal-note">No password, username, or key is ever entered on BandPeace — by principle.</p>
+  <div class="modal-actions">
+    <button type="button" class="btn btn-primary" id="modal-simulate">Simulate connection</button>
+    <button type="button" class="btn btn-ghost" id="modal-cancel">Cancel</button>
+  </div>
+</dialog>
+
+<footer class="site-footer">
+  <div class="wrap footer-inner">
+    <p>BandPeace demo · onboarding preview · nothing you enter leaves your device · 2026</p>
+    <span class="demo-badge">DEMO — simulated data</span>
+  </div>
+</footer>
+
+<script src="onboard.js"></script>
+</body>
+</html>

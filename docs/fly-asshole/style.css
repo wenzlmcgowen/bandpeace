@@ -105,6 +105,16 @@ a { color: var(--accent-b); }
   flex-wrap: wrap;
 }
 
+.home-link {
+  color: var(--ink-2);
+  text-decoration: none;
+  font-size: 0.88rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.home-link:hover { color: var(--accent-b); }
+
 .wordmark {
   display: flex;
   align-items: center;

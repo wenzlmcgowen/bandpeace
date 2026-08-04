@@ -3,15 +3,15 @@
 Runs a 36-month bandsim simulation (SimClock start 2026-01-01, seed 42 —
 same pattern as bandsim/cli.py run()) and emits:
 
-  site/data.json                       — monthly income rows by bucket,
+  site/fly-asshole/data.json           — monthly income rows by bucket,
                                          monthly expense totals AND per-category
                                          expense rows, per-year Schedule C
                                          summaries (incl. meals add-back bridge
                                          + quarterly set-aside)
-  site/files/schedule_c_<year>_SIMULATED.txt  (2026, 2027, 2028)
-  site/files/pnl_2026.xlsx             — generated here (openpyxl), branded
+  site/fly-asshole/files/schedule_c_<year>_SIMULATED.txt  (2026, 2027, 2028)
+  site/fly-asshole/files/pnl_2026.xlsx — generated here (openpyxl), branded
                                          Fly Asshole LLC, site lane names
-  site/files/royalty_map_2026.csv      — copied from band-biz-sim/out/
+  site/fly-asshole/files/royalty_map_2026.csv — copied from band-biz-sim/out/
                                          (carries no band name)
 
 Everything is SIMULATED — seed-fiction dollars, fake band, fake EIN.
@@ -44,7 +44,9 @@ from bandsim.streams.base import Song                       # noqa: E402
 from bandsim.streams.rights_engine import RightsEngine      # noqa: E402
 from bandsim.tax.schedule_c import SE_NET_MULTIPLIER, SE_TAX_RATE, build_filing  # noqa: E402
 
-SITE = Path(__file__).resolve().parent.parent / "site"
+# the Fly Asshole example profile lives at /fly-asshole/ (the site root is
+# the BandPeace product landing page)
+SITE = Path(__file__).resolve().parent.parent / "site" / "fly-asshole"
 FILES = SITE / "files"
 
 MONTHS = 36
