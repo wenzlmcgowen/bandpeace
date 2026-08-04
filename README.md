@@ -34,11 +34,14 @@ Requires the sim repo and its venv at `/Users/edwardmcgowen/projects/band-biz-si
 
 The script re-runs the simulation (SimClock start 2026-01-01, months=36,
 seed=42 — same wiring as `bandsim/cli.py run()`), rewrites `site/data.json`
-and the per-year `site/files/schedule_c_*_SIMULATED.txt`, copies
-`pnl_2026.xlsx` and `royalty_map_2026.csv` from the sim's `out/` dir, and
-prints a reconciliation: exported bucket totals must match the sim's
-QuickHooks ledger to the penny (yearly AND monthly), or it exits nonzero
-and leaves `data.json` unwritten.
+and the per-year `site/files/schedule_c_*_SIMULATED.txt`, GENERATES
+`pnl_2026.xlsx` (Fly Asshole branding, site lane names, Schedule C bridge +
+quarterly set-aside arithmetic on the YTD tab) and verifies every YTD line
+against data.json, copies `royalty_map_2026.csv` from the sim's `out/` dir
+(it carries no band name), and prints a reconciliation: exported income
+bucket totals AND per-category expense rows must match the sim's QuickHooks
+ledger to the penny (yearly AND monthly), or it exits nonzero and leaves
+`data.json` unwritten.
 
 ### Income buckets
 

@@ -1124,6 +1124,1924 @@
    "amount": 2298.07
   }
  ],
+ "expense_categories": [
+  "Meta Ads",
+  "Advertising & Marketing",
+  "Contractor - Business",
+  "Contract Labor - Music",
+  "Music & Distribution Software",
+  "Software & Subscriptions",
+  "Travel & Transport",
+  "Meals",
+  "Gear & Production",
+  "Insurance",
+  "Video Production",
+  "Artificial Intelligence"
+ ],
+ "expenses_by_category": [
+  {
+   "year": 2026,
+   "month": 1,
+   "category": "Meta Ads",
+   "amount": 450.87
+  },
+  {
+   "year": 2026,
+   "month": 1,
+   "category": "Advertising & Marketing",
+   "amount": 23.0
+  },
+  {
+   "year": 2026,
+   "month": 1,
+   "category": "Music & Distribution Software",
+   "amount": 12.99
+  },
+  {
+   "year": 2026,
+   "month": 1,
+   "category": "Software & Subscriptions",
+   "amount": 21.98
+  },
+  {
+   "year": 2026,
+   "month": 1,
+   "category": "Travel & Transport",
+   "amount": 72.84
+  },
+  {
+   "year": 2026,
+   "month": 1,
+   "category": "Meals",
+   "amount": 21.5
+  },
+  {
+   "year": 2026,
+   "month": 1,
+   "category": "Insurance",
+   "amount": 54.0
+  },
+  {
+   "year": 2026,
+   "month": 1,
+   "category": "Artificial Intelligence",
+   "amount": 20.0
+  },
+  {
+   "year": 2026,
+   "month": 2,
+   "category": "Meta Ads",
+   "amount": 772.4
+  },
+  {
+   "year": 2026,
+   "month": 2,
+   "category": "Advertising & Marketing",
+   "amount": 23.0
+  },
+  {
+   "year": 2026,
+   "month": 2,
+   "category": "Music & Distribution Software",
+   "amount": 12.99
+  },
+  {
+   "year": 2026,
+   "month": 2,
+   "category": "Software & Subscriptions",
+   "amount": 21.98
+  },
+  {
+   "year": 2026,
+   "month": 2,
+   "category": "Travel & Transport",
+   "amount": 193.01
+  },
+  {
+   "year": 2026,
+   "month": 2,
+   "category": "Meals",
+   "amount": 26.58
+  },
+  {
+   "year": 2026,
+   "month": 2,
+   "category": "Insurance",
+   "amount": 54.0
+  },
+  {
+   "year": 2026,
+   "month": 2,
+   "category": "Video Production",
+   "amount": 576.92
+  },
+  {
+   "year": 2026,
+   "month": 2,
+   "category": "Artificial Intelligence",
+   "amount": 20.0
+  },
+  {
+   "year": 2026,
+   "month": 3,
+   "category": "Advertising & Marketing",
+   "amount": 23.0
+  },
+  {
+   "year": 2026,
+   "month": 3,
+   "category": "Music & Distribution Software",
+   "amount": 35.98
+  },
+  {
+   "year": 2026,
+   "month": 3,
+   "category": "Software & Subscriptions",
+   "amount": 21.98
+  },
+  {
+   "year": 2026,
+   "month": 3,
+   "category": "Travel & Transport",
+   "amount": 472.23
+  },
+  {
+   "year": 2026,
+   "month": 3,
+   "category": "Meals",
+   "amount": 37.53
+  },
+  {
+   "year": 2026,
+   "month": 3,
+   "category": "Insurance",
+   "amount": 54.0
+  },
+  {
+   "year": 2026,
+   "month": 3,
+   "category": "Artificial Intelligence",
+   "amount": 20.0
+  },
+  {
+   "year": 2026,
+   "month": 4,
+   "category": "Meta Ads",
+   "amount": 294.06
+  },
+  {
+   "year": 2026,
+   "month": 4,
+   "category": "Advertising & Marketing",
+   "amount": 23.0
+  },
+  {
+   "year": 2026,
+   "month": 4,
+   "category": "Music & Distribution Software",
+   "amount": 12.99
+  },
+  {
+   "year": 2026,
+   "month": 4,
+   "category": "Software & Subscriptions",
+   "amount": 21.98
+  },
+  {
+   "year": 2026,
+   "month": 4,
+   "category": "Travel & Transport",
+   "amount": 46.61
+  },
+  {
+   "year": 2026,
+   "month": 4,
+   "category": "Meals",
+   "amount": 34.08
+  },
+  {
+   "year": 2026,
+   "month": 4,
+   "category": "Gear & Production",
+   "amount": 123.78
+  },
+  {
+   "year": 2026,
+   "month": 4,
+   "category": "Insurance",
+   "amount": 54.0
+  },
+  {
+   "year": 2026,
+   "month": 4,
+   "category": "Video Production",
+   "amount": 106.84
+  },
+  {
+   "year": 2026,
+   "month": 4,
+   "category": "Artificial Intelligence",
+   "amount": 20.0
+  },
+  {
+   "year": 2026,
+   "month": 5,
+   "category": "Advertising & Marketing",
+   "amount": 23.0
+  },
+  {
+   "year": 2026,
+   "month": 5,
+   "category": "Music & Distribution Software",
+   "amount": 12.99
+  },
+  {
+   "year": 2026,
+   "month": 5,
+   "category": "Software & Subscriptions",
+   "amount": 21.98
+  },
+  {
+   "year": 2026,
+   "month": 5,
+   "category": "Meals",
+   "amount": 50.48
+  },
+  {
+   "year": 2026,
+   "month": 5,
+   "category": "Insurance",
+   "amount": 54.0
+  },
+  {
+   "year": 2026,
+   "month": 5,
+   "category": "Video Production",
+   "amount": 917.63
+  },
+  {
+   "year": 2026,
+   "month": 5,
+   "category": "Artificial Intelligence",
+   "amount": 20.0
+  },
+  {
+   "year": 2026,
+   "month": 6,
+   "category": "Meta Ads",
+   "amount": 411.2
+  },
+  {
+   "year": 2026,
+   "month": 6,
+   "category": "Advertising & Marketing",
+   "amount": 23.0
+  },
+  {
+   "year": 2026,
+   "month": 6,
+   "category": "Music & Distribution Software",
+   "amount": 12.99
+  },
+  {
+   "year": 2026,
+   "month": 6,
+   "category": "Software & Subscriptions",
+   "amount": 21.98
+  },
+  {
+   "year": 2026,
+   "month": 6,
+   "category": "Travel & Transport",
+   "amount": 62.6
+  },
+  {
+   "year": 2026,
+   "month": 6,
+   "category": "Meals",
+   "amount": 26.29
+  },
+  {
+   "year": 2026,
+   "month": 6,
+   "category": "Insurance",
+   "amount": 54.0
+  },
+  {
+   "year": 2026,
+   "month": 6,
+   "category": "Video Production",
+   "amount": 1018.25
+  },
+  {
+   "year": 2026,
+   "month": 6,
+   "category": "Artificial Intelligence",
+   "amount": 20.0
+  },
+  {
+   "year": 2026,
+   "month": 7,
+   "category": "Meta Ads",
+   "amount": 307.59
+  },
+  {
+   "year": 2026,
+   "month": 7,
+   "category": "Advertising & Marketing",
+   "amount": 23.0
+  },
+  {
+   "year": 2026,
+   "month": 7,
+   "category": "Music & Distribution Software",
+   "amount": 12.99
+  },
+  {
+   "year": 2026,
+   "month": 7,
+   "category": "Software & Subscriptions",
+   "amount": 21.98
+  },
+  {
+   "year": 2026,
+   "month": 7,
+   "category": "Travel & Transport",
+   "amount": 49.75
+  },
+  {
+   "year": 2026,
+   "month": 7,
+   "category": "Meals",
+   "amount": 47.08
+  },
+  {
+   "year": 2026,
+   "month": 7,
+   "category": "Insurance",
+   "amount": 54.0
+  },
+  {
+   "year": 2026,
+   "month": 7,
+   "category": "Video Production",
+   "amount": 525.58
+  },
+  {
+   "year": 2026,
+   "month": 7,
+   "category": "Artificial Intelligence",
+   "amount": 20.0
+  },
+  {
+   "year": 2026,
+   "month": 8,
+   "category": "Meta Ads",
+   "amount": 555.04
+  },
+  {
+   "year": 2026,
+   "month": 8,
+   "category": "Advertising & Marketing",
+   "amount": 23.0
+  },
+  {
+   "year": 2026,
+   "month": 8,
+   "category": "Contract Labor - Music",
+   "amount": 160.68
+  },
+  {
+   "year": 2026,
+   "month": 8,
+   "category": "Music & Distribution Software",
+   "amount": 12.99
+  },
+  {
+   "year": 2026,
+   "month": 8,
+   "category": "Software & Subscriptions",
+   "amount": 21.98
+  },
+  {
+   "year": 2026,
+   "month": 8,
+   "category": "Travel & Transport",
+   "amount": 69.81
+  },
+  {
+   "year": 2026,
+   "month": 8,
+   "category": "Insurance",
+   "amount": 54.0
+  },
+  {
+   "year": 2026,
+   "month": 8,
+   "category": "Artificial Intelligence",
+   "amount": 20.0
+  },
+  {
+   "year": 2026,
+   "month": 9,
+   "category": "Meta Ads",
+   "amount": 1136.91
+  },
+  {
+   "year": 2026,
+   "month": 9,
+   "category": "Advertising & Marketing",
+   "amount": 23.0
+  },
+  {
+   "year": 2026,
+   "month": 9,
+   "category": "Contractor - Business",
+   "amount": 96.82
+  },
+  {
+   "year": 2026,
+   "month": 9,
+   "category": "Music & Distribution Software",
+   "amount": 12.99
+  },
+  {
+   "year": 2026,
+   "month": 9,
+   "category": "Software & Subscriptions",
+   "amount": 21.98
+  },
+  {
+   "year": 2026,
+   "month": 9,
+   "category": "Meals",
+   "amount": 51.7
+  },
+  {
+   "year": 2026,
+   "month": 9,
+   "category": "Gear & Production",
+   "amount": 123.64
+  },
+  {
+   "year": 2026,
+   "month": 9,
+   "category": "Insurance",
+   "amount": 54.0
+  },
+  {
+   "year": 2026,
+   "month": 9,
+   "category": "Artificial Intelligence",
+   "amount": 20.0
+  },
+  {
+   "year": 2026,
+   "month": 10,
+   "category": "Meta Ads",
+   "amount": 186.81
+  },
+  {
+   "year": 2026,
+   "month": 10,
+   "category": "Advertising & Marketing",
+   "amount": 23.0
+  },
+  {
+   "year": 2026,
+   "month": 10,
+   "category": "Music & Distribution Software",
+   "amount": 12.99
+  },
+  {
+   "year": 2026,
+   "month": 10,
+   "category": "Software & Subscriptions",
+   "amount": 21.98
+  },
+  {
+   "year": 2026,
+   "month": 10,
+   "category": "Travel & Transport",
+   "amount": 250.04
+  },
+  {
+   "year": 2026,
+   "month": 10,
+   "category": "Meals",
+   "amount": 35.0
+  },
+  {
+   "year": 2026,
+   "month": 10,
+   "category": "Gear & Production",
+   "amount": 46.98
+  },
+  {
+   "year": 2026,
+   "month": 10,
+   "category": "Insurance",
+   "amount": 54.0
+  },
+  {
+   "year": 2026,
+   "month": 10,
+   "category": "Artificial Intelligence",
+   "amount": 20.0
+  },
+  {
+   "year": 2026,
+   "month": 11,
+   "category": "Advertising & Marketing",
+   "amount": 23.0
+  },
+  {
+   "year": 2026,
+   "month": 11,
+   "category": "Music & Distribution Software",
+   "amount": 12.99
+  },
+  {
+   "year": 2026,
+   "month": 11,
+   "category": "Software & Subscriptions",
+   "amount": 21.98
+  },
+  {
+   "year": 2026,
+   "month": 11,
+   "category": "Meals",
+   "amount": 24.35
+  },
+  {
+   "year": 2026,
+   "month": 11,
+   "category": "Gear & Production",
+   "amount": 193.53
+  },
+  {
+   "year": 2026,
+   "month": 11,
+   "category": "Insurance",
+   "amount": 54.0
+  },
+  {
+   "year": 2026,
+   "month": 11,
+   "category": "Video Production",
+   "amount": 334.35
+  },
+  {
+   "year": 2026,
+   "month": 11,
+   "category": "Artificial Intelligence",
+   "amount": 20.0
+  },
+  {
+   "year": 2026,
+   "month": 12,
+   "category": "Advertising & Marketing",
+   "amount": 23.0
+  },
+  {
+   "year": 2026,
+   "month": 12,
+   "category": "Music & Distribution Software",
+   "amount": 12.99
+  },
+  {
+   "year": 2026,
+   "month": 12,
+   "category": "Software & Subscriptions",
+   "amount": 21.98
+  },
+  {
+   "year": 2026,
+   "month": 12,
+   "category": "Travel & Transport",
+   "amount": 63.22
+  },
+  {
+   "year": 2026,
+   "month": 12,
+   "category": "Meals",
+   "amount": 24.57
+  },
+  {
+   "year": 2026,
+   "month": 12,
+   "category": "Gear & Production",
+   "amount": 116.56
+  },
+  {
+   "year": 2026,
+   "month": 12,
+   "category": "Insurance",
+   "amount": 54.0
+  },
+  {
+   "year": 2026,
+   "month": 12,
+   "category": "Artificial Intelligence",
+   "amount": 20.0
+  },
+  {
+   "year": 2027,
+   "month": 1,
+   "category": "Meta Ads",
+   "amount": 449.93
+  },
+  {
+   "year": 2027,
+   "month": 1,
+   "category": "Advertising & Marketing",
+   "amount": 23.0
+  },
+  {
+   "year": 2027,
+   "month": 1,
+   "category": "Music & Distribution Software",
+   "amount": 12.99
+  },
+  {
+   "year": 2027,
+   "month": 1,
+   "category": "Software & Subscriptions",
+   "amount": 21.98
+  },
+  {
+   "year": 2027,
+   "month": 1,
+   "category": "Meals",
+   "amount": 27.21
+  },
+  {
+   "year": 2027,
+   "month": 1,
+   "category": "Gear & Production",
+   "amount": 253.31
+  },
+  {
+   "year": 2027,
+   "month": 1,
+   "category": "Insurance",
+   "amount": 54.0
+  },
+  {
+   "year": 2027,
+   "month": 1,
+   "category": "Artificial Intelligence",
+   "amount": 20.0
+  },
+  {
+   "year": 2027,
+   "month": 2,
+   "category": "Advertising & Marketing",
+   "amount": 23.0
+  },
+  {
+   "year": 2027,
+   "month": 2,
+   "category": "Contractor - Business",
+   "amount": 350.2
+  },
+  {
+   "year": 2027,
+   "month": 2,
+   "category": "Music & Distribution Software",
+   "amount": 12.99
+  },
+  {
+   "year": 2027,
+   "month": 2,
+   "category": "Software & Subscriptions",
+   "amount": 21.98
+  },
+  {
+   "year": 2027,
+   "month": 2,
+   "category": "Travel & Transport",
+   "amount": 91.53
+  },
+  {
+   "year": 2027,
+   "month": 2,
+   "category": "Meals",
+   "amount": 21.85
+  },
+  {
+   "year": 2027,
+   "month": 2,
+   "category": "Insurance",
+   "amount": 54.0
+  },
+  {
+   "year": 2027,
+   "month": 2,
+   "category": "Video Production",
+   "amount": 208.6
+  },
+  {
+   "year": 2027,
+   "month": 2,
+   "category": "Artificial Intelligence",
+   "amount": 20.0
+  },
+  {
+   "year": 2027,
+   "month": 3,
+   "category": "Meta Ads",
+   "amount": 220.63
+  },
+  {
+   "year": 2027,
+   "month": 3,
+   "category": "Advertising & Marketing",
+   "amount": 23.0
+  },
+  {
+   "year": 2027,
+   "month": 3,
+   "category": "Contract Labor - Music",
+   "amount": 371.06
+  },
+  {
+   "year": 2027,
+   "month": 3,
+   "category": "Music & Distribution Software",
+   "amount": 35.98
+  },
+  {
+   "year": 2027,
+   "month": 3,
+   "category": "Software & Subscriptions",
+   "amount": 21.98
+  },
+  {
+   "year": 2027,
+   "month": 3,
+   "category": "Travel & Transport",
+   "amount": 437.04
+  },
+  {
+   "year": 2027,
+   "month": 3,
+   "category": "Meals",
+   "amount": 47.1
+  },
+  {
+   "year": 2027,
+   "month": 3,
+   "category": "Insurance",
+   "amount": 54.0
+  },
+  {
+   "year": 2027,
+   "month": 3,
+   "category": "Artificial Intelligence",
+   "amount": 20.0
+  },
+  {
+   "year": 2027,
+   "month": 4,
+   "category": "Meta Ads",
+   "amount": 548.24
+  },
+  {
+   "year": 2027,
+   "month": 4,
+   "category": "Advertising & Marketing",
+   "amount": 23.0
+  },
+  {
+   "year": 2027,
+   "month": 4,
+   "category": "Contractor - Business",
+   "amount": 419.1
+  },
+  {
+   "year": 2027,
+   "month": 4,
+   "category": "Music & Distribution Software",
+   "amount": 12.99
+  },
+  {
+   "year": 2027,
+   "month": 4,
+   "category": "Software & Subscriptions",
+   "amount": 21.98
+  },
+  {
+   "year": 2027,
+   "month": 4,
+   "category": "Meals",
+   "amount": 68.97
+  },
+  {
+   "year": 2027,
+   "month": 4,
+   "category": "Gear & Production",
+   "amount": 84.42
+  },
+  {
+   "year": 2027,
+   "month": 4,
+   "category": "Insurance",
+   "amount": 54.0
+  },
+  {
+   "year": 2027,
+   "month": 4,
+   "category": "Video Production",
+   "amount": 799.64
+  },
+  {
+   "year": 2027,
+   "month": 4,
+   "category": "Artificial Intelligence",
+   "amount": 20.0
+  },
+  {
+   "year": 2027,
+   "month": 5,
+   "category": "Advertising & Marketing",
+   "amount": 23.0
+  },
+  {
+   "year": 2027,
+   "month": 5,
+   "category": "Contractor - Business",
+   "amount": 615.32
+  },
+  {
+   "year": 2027,
+   "month": 5,
+   "category": "Music & Distribution Software",
+   "amount": 12.99
+  },
+  {
+   "year": 2027,
+   "month": 5,
+   "category": "Software & Subscriptions",
+   "amount": 21.98
+  },
+  {
+   "year": 2027,
+   "month": 5,
+   "category": "Travel & Transport",
+   "amount": 48.45
+  },
+  {
+   "year": 2027,
+   "month": 5,
+   "category": "Meals",
+   "amount": 51.02
+  },
+  {
+   "year": 2027,
+   "month": 5,
+   "category": "Gear & Production",
+   "amount": 51.89
+  },
+  {
+   "year": 2027,
+   "month": 5,
+   "category": "Insurance",
+   "amount": 54.0
+  },
+  {
+   "year": 2027,
+   "month": 5,
+   "category": "Artificial Intelligence",
+   "amount": 20.0
+  },
+  {
+   "year": 2027,
+   "month": 6,
+   "category": "Meta Ads",
+   "amount": 352.01
+  },
+  {
+   "year": 2027,
+   "month": 6,
+   "category": "Advertising & Marketing",
+   "amount": 23.0
+  },
+  {
+   "year": 2027,
+   "month": 6,
+   "category": "Contract Labor - Music",
+   "amount": 495.89
+  },
+  {
+   "year": 2027,
+   "month": 6,
+   "category": "Music & Distribution Software",
+   "amount": 12.99
+  },
+  {
+   "year": 2027,
+   "month": 6,
+   "category": "Software & Subscriptions",
+   "amount": 21.98
+  },
+  {
+   "year": 2027,
+   "month": 6,
+   "category": "Travel & Transport",
+   "amount": 81.07
+  },
+  {
+   "year": 2027,
+   "month": 6,
+   "category": "Meals",
+   "amount": 36.1
+  },
+  {
+   "year": 2027,
+   "month": 6,
+   "category": "Insurance",
+   "amount": 54.0
+  },
+  {
+   "year": 2027,
+   "month": 6,
+   "category": "Video Production",
+   "amount": 879.1
+  },
+  {
+   "year": 2027,
+   "month": 6,
+   "category": "Artificial Intelligence",
+   "amount": 20.0
+  },
+  {
+   "year": 2027,
+   "month": 7,
+   "category": "Meta Ads",
+   "amount": 159.93
+  },
+  {
+   "year": 2027,
+   "month": 7,
+   "category": "Advertising & Marketing",
+   "amount": 23.0
+  },
+  {
+   "year": 2027,
+   "month": 7,
+   "category": "Music & Distribution Software",
+   "amount": 12.99
+  },
+  {
+   "year": 2027,
+   "month": 7,
+   "category": "Software & Subscriptions",
+   "amount": 21.98
+  },
+  {
+   "year": 2027,
+   "month": 7,
+   "category": "Travel & Transport",
+   "amount": 109.62
+  },
+  {
+   "year": 2027,
+   "month": 7,
+   "category": "Meals",
+   "amount": 24.1
+  },
+  {
+   "year": 2027,
+   "month": 7,
+   "category": "Insurance",
+   "amount": 54.0
+  },
+  {
+   "year": 2027,
+   "month": 7,
+   "category": "Artificial Intelligence",
+   "amount": 20.0
+  },
+  {
+   "year": 2027,
+   "month": 8,
+   "category": "Meta Ads",
+   "amount": 381.03
+  },
+  {
+   "year": 2027,
+   "month": 8,
+   "category": "Advertising & Marketing",
+   "amount": 23.0
+  },
+  {
+   "year": 2027,
+   "month": 8,
+   "category": "Music & Distribution Software",
+   "amount": 12.99
+  },
+  {
+   "year": 2027,
+   "month": 8,
+   "category": "Software & Subscriptions",
+   "amount": 21.98
+  },
+  {
+   "year": 2027,
+   "month": 8,
+   "category": "Travel & Transport",
+   "amount": 527.56
+  },
+  {
+   "year": 2027,
+   "month": 8,
+   "category": "Meals",
+   "amount": 19.55
+  },
+  {
+   "year": 2027,
+   "month": 8,
+   "category": "Gear & Production",
+   "amount": 328.69
+  },
+  {
+   "year": 2027,
+   "month": 8,
+   "category": "Insurance",
+   "amount": 54.0
+  },
+  {
+   "year": 2027,
+   "month": 8,
+   "category": "Artificial Intelligence",
+   "amount": 20.0
+  },
+  {
+   "year": 2027,
+   "month": 9,
+   "category": "Meta Ads",
+   "amount": 82.75
+  },
+  {
+   "year": 2027,
+   "month": 9,
+   "category": "Advertising & Marketing",
+   "amount": 23.0
+  },
+  {
+   "year": 2027,
+   "month": 9,
+   "category": "Contractor - Business",
+   "amount": 160.11
+  },
+  {
+   "year": 2027,
+   "month": 9,
+   "category": "Music & Distribution Software",
+   "amount": 12.99
+  },
+  {
+   "year": 2027,
+   "month": 9,
+   "category": "Software & Subscriptions",
+   "amount": 21.98
+  },
+  {
+   "year": 2027,
+   "month": 9,
+   "category": "Travel & Transport",
+   "amount": 447.84
+  },
+  {
+   "year": 2027,
+   "month": 9,
+   "category": "Meals",
+   "amount": 32.79
+  },
+  {
+   "year": 2027,
+   "month": 9,
+   "category": "Insurance",
+   "amount": 54.0
+  },
+  {
+   "year": 2027,
+   "month": 9,
+   "category": "Artificial Intelligence",
+   "amount": 20.0
+  },
+  {
+   "year": 2027,
+   "month": 10,
+   "category": "Meta Ads",
+   "amount": 264.66
+  },
+  {
+   "year": 2027,
+   "month": 10,
+   "category": "Advertising & Marketing",
+   "amount": 23.0
+  },
+  {
+   "year": 2027,
+   "month": 10,
+   "category": "Music & Distribution Software",
+   "amount": 12.99
+  },
+  {
+   "year": 2027,
+   "month": 10,
+   "category": "Software & Subscriptions",
+   "amount": 21.98
+  },
+  {
+   "year": 2027,
+   "month": 10,
+   "category": "Travel & Transport",
+   "amount": 22.08
+  },
+  {
+   "year": 2027,
+   "month": 10,
+   "category": "Meals",
+   "amount": 32.42
+  },
+  {
+   "year": 2027,
+   "month": 10,
+   "category": "Gear & Production",
+   "amount": 398.62
+  },
+  {
+   "year": 2027,
+   "month": 10,
+   "category": "Insurance",
+   "amount": 54.0
+  },
+  {
+   "year": 2027,
+   "month": 10,
+   "category": "Artificial Intelligence",
+   "amount": 20.0
+  },
+  {
+   "year": 2027,
+   "month": 11,
+   "category": "Meta Ads",
+   "amount": 559.89
+  },
+  {
+   "year": 2027,
+   "month": 11,
+   "category": "Advertising & Marketing",
+   "amount": 23.0
+  },
+  {
+   "year": 2027,
+   "month": 11,
+   "category": "Contract Labor - Music",
+   "amount": 487.96
+  },
+  {
+   "year": 2027,
+   "month": 11,
+   "category": "Music & Distribution Software",
+   "amount": 12.99
+  },
+  {
+   "year": 2027,
+   "month": 11,
+   "category": "Software & Subscriptions",
+   "amount": 21.98
+  },
+  {
+   "year": 2027,
+   "month": 11,
+   "category": "Meals",
+   "amount": 9.62
+  },
+  {
+   "year": 2027,
+   "month": 11,
+   "category": "Gear & Production",
+   "amount": 146.77
+  },
+  {
+   "year": 2027,
+   "month": 11,
+   "category": "Insurance",
+   "amount": 54.0
+  },
+  {
+   "year": 2027,
+   "month": 11,
+   "category": "Artificial Intelligence",
+   "amount": 20.0
+  },
+  {
+   "year": 2027,
+   "month": 12,
+   "category": "Meta Ads",
+   "amount": 122.92
+  },
+  {
+   "year": 2027,
+   "month": 12,
+   "category": "Advertising & Marketing",
+   "amount": 23.0
+  },
+  {
+   "year": 2027,
+   "month": 12,
+   "category": "Music & Distribution Software",
+   "amount": 12.99
+  },
+  {
+   "year": 2027,
+   "month": 12,
+   "category": "Software & Subscriptions",
+   "amount": 21.98
+  },
+  {
+   "year": 2027,
+   "month": 12,
+   "category": "Travel & Transport",
+   "amount": 437.75
+  },
+  {
+   "year": 2027,
+   "month": 12,
+   "category": "Meals",
+   "amount": 11.08
+  },
+  {
+   "year": 2027,
+   "month": 12,
+   "category": "Insurance",
+   "amount": 54.0
+  },
+  {
+   "year": 2027,
+   "month": 12,
+   "category": "Video Production",
+   "amount": 896.7
+  },
+  {
+   "year": 2027,
+   "month": 12,
+   "category": "Artificial Intelligence",
+   "amount": 20.0
+  },
+  {
+   "year": 2028,
+   "month": 1,
+   "category": "Advertising & Marketing",
+   "amount": 23.0
+  },
+  {
+   "year": 2028,
+   "month": 1,
+   "category": "Contractor - Business",
+   "amount": 322.6
+  },
+  {
+   "year": 2028,
+   "month": 1,
+   "category": "Music & Distribution Software",
+   "amount": 12.99
+  },
+  {
+   "year": 2028,
+   "month": 1,
+   "category": "Software & Subscriptions",
+   "amount": 21.98
+  },
+  {
+   "year": 2028,
+   "month": 1,
+   "category": "Travel & Transport",
+   "amount": 47.0
+  },
+  {
+   "year": 2028,
+   "month": 1,
+   "category": "Meals",
+   "amount": 57.03
+  },
+  {
+   "year": 2028,
+   "month": 1,
+   "category": "Insurance",
+   "amount": 54.0
+  },
+  {
+   "year": 2028,
+   "month": 1,
+   "category": "Video Production",
+   "amount": 856.49
+  },
+  {
+   "year": 2028,
+   "month": 1,
+   "category": "Artificial Intelligence",
+   "amount": 20.0
+  },
+  {
+   "year": 2028,
+   "month": 2,
+   "category": "Meta Ads",
+   "amount": 240.31
+  },
+  {
+   "year": 2028,
+   "month": 2,
+   "category": "Advertising & Marketing",
+   "amount": 23.0
+  },
+  {
+   "year": 2028,
+   "month": 2,
+   "category": "Contractor - Business",
+   "amount": 212.44
+  },
+  {
+   "year": 2028,
+   "month": 2,
+   "category": "Music & Distribution Software",
+   "amount": 12.99
+  },
+  {
+   "year": 2028,
+   "month": 2,
+   "category": "Software & Subscriptions",
+   "amount": 21.98
+  },
+  {
+   "year": 2028,
+   "month": 2,
+   "category": "Meals",
+   "amount": 46.34
+  },
+  {
+   "year": 2028,
+   "month": 2,
+   "category": "Gear & Production",
+   "amount": 240.94
+  },
+  {
+   "year": 2028,
+   "month": 2,
+   "category": "Insurance",
+   "amount": 54.0
+  },
+  {
+   "year": 2028,
+   "month": 2,
+   "category": "Artificial Intelligence",
+   "amount": 20.0
+  },
+  {
+   "year": 2028,
+   "month": 3,
+   "category": "Advertising & Marketing",
+   "amount": 23.0
+  },
+  {
+   "year": 2028,
+   "month": 3,
+   "category": "Contractor - Business",
+   "amount": 265.21
+  },
+  {
+   "year": 2028,
+   "month": 3,
+   "category": "Music & Distribution Software",
+   "amount": 35.98
+  },
+  {
+   "year": 2028,
+   "month": 3,
+   "category": "Software & Subscriptions",
+   "amount": 21.98
+  },
+  {
+   "year": 2028,
+   "month": 3,
+   "category": "Travel & Transport",
+   "amount": 42.69
+  },
+  {
+   "year": 2028,
+   "month": 3,
+   "category": "Meals",
+   "amount": 17.37
+  },
+  {
+   "year": 2028,
+   "month": 3,
+   "category": "Insurance",
+   "amount": 54.0
+  },
+  {
+   "year": 2028,
+   "month": 3,
+   "category": "Artificial Intelligence",
+   "amount": 20.0
+  },
+  {
+   "year": 2028,
+   "month": 4,
+   "category": "Advertising & Marketing",
+   "amount": 23.0
+  },
+  {
+   "year": 2028,
+   "month": 4,
+   "category": "Music & Distribution Software",
+   "amount": 12.99
+  },
+  {
+   "year": 2028,
+   "month": 4,
+   "category": "Software & Subscriptions",
+   "amount": 21.98
+  },
+  {
+   "year": 2028,
+   "month": 4,
+   "category": "Travel & Transport",
+   "amount": 79.95
+  },
+  {
+   "year": 2028,
+   "month": 4,
+   "category": "Meals",
+   "amount": 11.15
+  },
+  {
+   "year": 2028,
+   "month": 4,
+   "category": "Insurance",
+   "amount": 54.0
+  },
+  {
+   "year": 2028,
+   "month": 4,
+   "category": "Video Production",
+   "amount": 248.58
+  },
+  {
+   "year": 2028,
+   "month": 4,
+   "category": "Artificial Intelligence",
+   "amount": 20.0
+  },
+  {
+   "year": 2028,
+   "month": 5,
+   "category": "Advertising & Marketing",
+   "amount": 23.0
+  },
+  {
+   "year": 2028,
+   "month": 5,
+   "category": "Music & Distribution Software",
+   "amount": 12.99
+  },
+  {
+   "year": 2028,
+   "month": 5,
+   "category": "Software & Subscriptions",
+   "amount": 21.98
+  },
+  {
+   "year": 2028,
+   "month": 5,
+   "category": "Travel & Transport",
+   "amount": 82.6
+  },
+  {
+   "year": 2028,
+   "month": 5,
+   "category": "Meals",
+   "amount": 35.82
+  },
+  {
+   "year": 2028,
+   "month": 5,
+   "category": "Gear & Production",
+   "amount": 55.59
+  },
+  {
+   "year": 2028,
+   "month": 5,
+   "category": "Insurance",
+   "amount": 54.0
+  },
+  {
+   "year": 2028,
+   "month": 5,
+   "category": "Artificial Intelligence",
+   "amount": 20.0
+  },
+  {
+   "year": 2028,
+   "month": 6,
+   "category": "Meta Ads",
+   "amount": 380.93
+  },
+  {
+   "year": 2028,
+   "month": 6,
+   "category": "Advertising & Marketing",
+   "amount": 23.0
+  },
+  {
+   "year": 2028,
+   "month": 6,
+   "category": "Music & Distribution Software",
+   "amount": 12.99
+  },
+  {
+   "year": 2028,
+   "month": 6,
+   "category": "Software & Subscriptions",
+   "amount": 21.98
+  },
+  {
+   "year": 2028,
+   "month": 6,
+   "category": "Travel & Transport",
+   "amount": 54.24
+  },
+  {
+   "year": 2028,
+   "month": 6,
+   "category": "Meals",
+   "amount": 17.89
+  },
+  {
+   "year": 2028,
+   "month": 6,
+   "category": "Insurance",
+   "amount": 54.0
+  },
+  {
+   "year": 2028,
+   "month": 6,
+   "category": "Video Production",
+   "amount": 519.15
+  },
+  {
+   "year": 2028,
+   "month": 6,
+   "category": "Artificial Intelligence",
+   "amount": 20.0
+  },
+  {
+   "year": 2028,
+   "month": 7,
+   "category": "Meta Ads",
+   "amount": 164.78
+  },
+  {
+   "year": 2028,
+   "month": 7,
+   "category": "Advertising & Marketing",
+   "amount": 23.0
+  },
+  {
+   "year": 2028,
+   "month": 7,
+   "category": "Music & Distribution Software",
+   "amount": 12.99
+  },
+  {
+   "year": 2028,
+   "month": 7,
+   "category": "Software & Subscriptions",
+   "amount": 21.98
+  },
+  {
+   "year": 2028,
+   "month": 7,
+   "category": "Travel & Transport",
+   "amount": 64.65
+  },
+  {
+   "year": 2028,
+   "month": 7,
+   "category": "Meals",
+   "amount": 29.37
+  },
+  {
+   "year": 2028,
+   "month": 7,
+   "category": "Insurance",
+   "amount": 54.0
+  },
+  {
+   "year": 2028,
+   "month": 7,
+   "category": "Video Production",
+   "amount": 927.46
+  },
+  {
+   "year": 2028,
+   "month": 7,
+   "category": "Artificial Intelligence",
+   "amount": 20.0
+  },
+  {
+   "year": 2028,
+   "month": 8,
+   "category": "Meta Ads",
+   "amount": 769.01
+  },
+  {
+   "year": 2028,
+   "month": 8,
+   "category": "Advertising & Marketing",
+   "amount": 23.0
+  },
+  {
+   "year": 2028,
+   "month": 8,
+   "category": "Contractor - Business",
+   "amount": 211.53
+  },
+  {
+   "year": 2028,
+   "month": 8,
+   "category": "Contract Labor - Music",
+   "amount": 150.03
+  },
+  {
+   "year": 2028,
+   "month": 8,
+   "category": "Music & Distribution Software",
+   "amount": 12.99
+  },
+  {
+   "year": 2028,
+   "month": 8,
+   "category": "Software & Subscriptions",
+   "amount": 21.98
+  },
+  {
+   "year": 2028,
+   "month": 8,
+   "category": "Travel & Transport",
+   "amount": 80.45
+  },
+  {
+   "year": 2028,
+   "month": 8,
+   "category": "Meals",
+   "amount": 19.01
+  },
+  {
+   "year": 2028,
+   "month": 8,
+   "category": "Gear & Production",
+   "amount": 91.62
+  },
+  {
+   "year": 2028,
+   "month": 8,
+   "category": "Insurance",
+   "amount": 54.0
+  },
+  {
+   "year": 2028,
+   "month": 8,
+   "category": "Video Production",
+   "amount": 495.73
+  },
+  {
+   "year": 2028,
+   "month": 8,
+   "category": "Artificial Intelligence",
+   "amount": 20.0
+  },
+  {
+   "year": 2028,
+   "month": 9,
+   "category": "Advertising & Marketing",
+   "amount": 23.0
+  },
+  {
+   "year": 2028,
+   "month": 9,
+   "category": "Music & Distribution Software",
+   "amount": 12.99
+  },
+  {
+   "year": 2028,
+   "month": 9,
+   "category": "Software & Subscriptions",
+   "amount": 21.98
+  },
+  {
+   "year": 2028,
+   "month": 9,
+   "category": "Travel & Transport",
+   "amount": 99.1
+  },
+  {
+   "year": 2028,
+   "month": 9,
+   "category": "Meals",
+   "amount": 16.95
+  },
+  {
+   "year": 2028,
+   "month": 9,
+   "category": "Gear & Production",
+   "amount": 130.85
+  },
+  {
+   "year": 2028,
+   "month": 9,
+   "category": "Insurance",
+   "amount": 54.0
+  },
+  {
+   "year": 2028,
+   "month": 9,
+   "category": "Artificial Intelligence",
+   "amount": 20.0
+  },
+  {
+   "year": 2028,
+   "month": 10,
+   "category": "Meta Ads",
+   "amount": 208.0
+  },
+  {
+   "year": 2028,
+   "month": 10,
+   "category": "Advertising & Marketing",
+   "amount": 23.0
+  },
+  {
+   "year": 2028,
+   "month": 10,
+   "category": "Music & Distribution Software",
+   "amount": 12.99
+  },
+  {
+   "year": 2028,
+   "month": 10,
+   "category": "Software & Subscriptions",
+   "amount": 21.98
+  },
+  {
+   "year": 2028,
+   "month": 10,
+   "category": "Travel & Transport",
+   "amount": 90.86
+  },
+  {
+   "year": 2028,
+   "month": 10,
+   "category": "Meals",
+   "amount": 33.09
+  },
+  {
+   "year": 2028,
+   "month": 10,
+   "category": "Insurance",
+   "amount": 54.0
+  },
+  {
+   "year": 2028,
+   "month": 10,
+   "category": "Video Production",
+   "amount": 241.48
+  },
+  {
+   "year": 2028,
+   "month": 10,
+   "category": "Artificial Intelligence",
+   "amount": 20.0
+  },
+  {
+   "year": 2028,
+   "month": 11,
+   "category": "Meta Ads",
+   "amount": 600.33
+  },
+  {
+   "year": 2028,
+   "month": 11,
+   "category": "Advertising & Marketing",
+   "amount": 23.0
+  },
+  {
+   "year": 2028,
+   "month": 11,
+   "category": "Contract Labor - Music",
+   "amount": 268.87
+  },
+  {
+   "year": 2028,
+   "month": 11,
+   "category": "Music & Distribution Software",
+   "amount": 12.99
+  },
+  {
+   "year": 2028,
+   "month": 11,
+   "category": "Software & Subscriptions",
+   "amount": 21.98
+  },
+  {
+   "year": 2028,
+   "month": 11,
+   "category": "Travel & Transport",
+   "amount": 63.93
+  },
+  {
+   "year": 2028,
+   "month": 11,
+   "category": "Meals",
+   "amount": 30.3
+  },
+  {
+   "year": 2028,
+   "month": 11,
+   "category": "Insurance",
+   "amount": 54.0
+  },
+  {
+   "year": 2028,
+   "month": 11,
+   "category": "Artificial Intelligence",
+   "amount": 20.0
+  },
+  {
+   "year": 2028,
+   "month": 12,
+   "category": "Meta Ads",
+   "amount": 484.99
+  },
+  {
+   "year": 2028,
+   "month": 12,
+   "category": "Advertising & Marketing",
+   "amount": 23.0
+  },
+  {
+   "year": 2028,
+   "month": 12,
+   "category": "Contractor - Business",
+   "amount": 570.99
+  },
+  {
+   "year": 2028,
+   "month": 12,
+   "category": "Contract Labor - Music",
+   "amount": 495.6
+  },
+  {
+   "year": 2028,
+   "month": 12,
+   "category": "Music & Distribution Software",
+   "amount": 12.99
+  },
+  {
+   "year": 2028,
+   "month": 12,
+   "category": "Software & Subscriptions",
+   "amount": 21.98
+  },
+  {
+   "year": 2028,
+   "month": 12,
+   "category": "Meals",
+   "amount": 23.2
+  },
+  {
+   "year": 2028,
+   "month": 12,
+   "category": "Insurance",
+   "amount": 54.0
+  },
+  {
+   "year": 2028,
+   "month": 12,
+   "category": "Video Production",
+   "amount": 591.32
+  },
+  {
+   "year": 2028,
+   "month": 12,
+   "category": "Artificial Intelligence",
+   "amount": 20.0
+  }
+ ],
  "schedule_c": {
   "2026": {
    "year": 2026,
@@ -1131,6 +3049,10 @@
    "total_deductions": 11532.76,
    "net_profit": 34253.11,
    "se_tax": 4839.81,
+   "books_net": 34063.53,
+   "meals_total": 379.16,
+   "meals_addback": 189.58,
+   "quarterly_set_aside": 2140.82,
    "lines": {
     "8": {
      "label": "Advertising",
@@ -1168,6 +3090,10 @@
    "total_deductions": 14089.85,
    "net_profit": 25944.39,
    "se_tax": 3665.82,
+   "books_net": 25753.49,
+   "meals_total": 381.81,
+   "meals_addback": 190.91,
+   "quarterly_set_aside": 1621.52,
    "lines": {
     "8": {
      "label": "Advertising",
@@ -1205,6 +3131,10 @@
    "total_deductions": 12225.69,
    "net_profit": 26273.79,
    "se_tax": 3712.37,
+   "books_net": 26105.03,
+   "meals_total": 337.52,
+   "meals_addback": 168.76,
+   "quarterly_set_aside": 1642.11,
    "lines": {
     "8": {
      "label": "Advertising",

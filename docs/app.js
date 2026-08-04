@@ -283,7 +283,8 @@
       "text-anchor": "end", fill: "#f3f2f8", "font-size": 12,
       "font-weight": 700, "font-family": "system-ui, sans-serif"
     }, svg);
-    netLbl.textContent = "net " + fmt(lastP.net);
+    // month/year-aware so it reads as the last data point, not a period total
+    netLbl.textContent = lastP.label + " net " + fmt(lastP.net);
 
     // hover targets: one per period, full plot height
     ps.forEach(function (p, i) {
@@ -425,6 +426,112 @@
     table.appendChild(tbody);
   }
 
+  // ── expense breakdown (Buzz's "what did we spend on ads") ──────────
+  function expensePeriods() {
+    // like periods(), but per expense category; respects view/year,
+    // ignores the income-lane filter on purpose
+    var d = state.data;
+    var cats = d.expense_categories || [];
+    var out = [];
+
+    function blank(label) {
+      var byCat = {};
+      cats.forEach(function (c) { byCat[c] = 0; });
+      return { label: label, byCat: byCat, total: 0 };
+    }
+
+    if (state.view === "monthly") {
+      for (var m = 1; m <= 12; m++) out.push(blank(MONTH_NAMES[m - 1]));
+      (d.expenses_by_category || []).forEach(function (r) {
+        if (r.year !== state.year) return;
+        out[r.month - 1].byCat[r.category] += r.amount;
+        out[r.month - 1].total += r.amount;
+      });
+    } else {
+      var byYear = {};
+      d.meta.years.forEach(function (y) {
+        var p = blank(String(y));
+        byYear[y] = p;
+        out.push(p);
+      });
+      (d.expenses_by_category || []).forEach(function (r) {
+        byYear[r.year].byCat[r.category] += r.amount;
+        byYear[r.year].total += r.amount;
+      });
+    }
+    return out;
+  }
+
+  function renderExpenses() {
+    var table = document.getElementById("expense-table");
+    if (!table) return;
+    table.textContent = "";
+    var ps = expensePeriods();
+    var cats = (state.data.expense_categories || []).slice();
+
+    // biggest spend first within the current scope
+    var scopeTotal = {};
+    cats.forEach(function (c) {
+      scopeTotal[c] = ps.reduce(function (s, p) { return s + p.byCat[c]; }, 0);
+    });
+    cats.sort(function (a, b) { return scopeTotal[b] - scopeTotal[a]; });
+
+    document.getElementById("expense-summary").textContent =
+      "Expense breakdown · " + (state.view === "monthly" ? state.year : "2026–2028");
+
+    var caption = document.createElement("caption");
+    caption.className = "visually-hidden";
+    caption.textContent = "Business expenses by category — simulated data";
+    table.appendChild(caption);
+
+    var thead = document.createElement("thead");
+    var hr = document.createElement("tr");
+    var th0 = document.createElement("th");
+    th0.scope = "col";
+    th0.textContent = state.view === "monthly" ? ("Category · " + state.year) : "Category";
+    hr.appendChild(th0);
+    ps.forEach(function (p) {
+      var th = document.createElement("th");
+      th.scope = "col";
+      th.textContent = p.label;
+      hr.appendChild(th);
+    });
+    var thT = document.createElement("th");
+    thT.scope = "col";
+    thT.textContent = "Total";
+    hr.appendChild(thT);
+    thead.appendChild(hr);
+    table.appendChild(thead);
+
+    var tbody = document.createElement("tbody");
+
+    function row(label, values, isTotal) {
+      var tr = document.createElement("tr");
+      if (isTotal) tr.className = "total-row";
+      var td0 = document.createElement("td");
+      td0.textContent = label;
+      tr.appendChild(td0);
+      var sum = 0;
+      values.forEach(function (v) {
+        sum += v;
+        var td = document.createElement("td");
+        td.textContent = fmt(v);
+        tr.appendChild(td);
+      });
+      var tdT = document.createElement("td");
+      tdT.textContent = fmt(sum);
+      tr.appendChild(tdT);
+      tbody.appendChild(tr);
+    }
+
+    cats.forEach(function (c) {
+      row(c, ps.map(function (p) { return p.byCat[c]; }), false);
+    });
+    row("Total expenses", ps.map(function (p) { return p.total; }), true);
+
+    table.appendChild(tbody);
+  }
+
   // ── taxes ──────────────────────────────────────────────────────────
   function renderTaxes() {
     var host = document.getElementById("tax-grid");
@@ -465,15 +572,44 @@
       });
       card.appendChild(lines);
 
+      // the books↔tax bridge: displayed values are rounded so the visible
+      // arithmetic adds up exactly (add-back = rounded taxable − rounded
+      // books; the exact cents live in data.json meals_addback)
+      if (typeof s.books_net === "number") {
+        var addback = Math.round(s.net_profit) - Math.round(s.books_net);
+        var bridge = document.createElement("p");
+        bridge.className = "tax-bridge";
+        bridge.textContent = "Books net " + fmt(Math.round(s.books_net)) +
+          " + " + fmt(addback) +
+          " meals add-back (only 50% of meals is deductible) = taxable net " +
+          fmt(Math.round(s.net_profit));
+        card.appendChild(bridge);
+      }
+
       var se = document.createElement("div");
       se.className = "tax-line tax-se";
       var seLbl = document.createElement("span");
-      seLbl.textContent = "Self-employment tax (computed from net)";
+      seLbl.textContent = "Self-employment tax";
       var seAmt = document.createElement("span");
       seAmt.className = "amt";
       seAmt.textContent = fmt(s.se_tax);
       se.appendChild(seLbl); se.appendChild(seAmt);
       card.appendChild(se);
+
+      var seWords = document.createElement("p");
+      seWords.className = "tax-words";
+      seWords.textContent = "Self-employment tax = 15.3% for Social Security + Medicare, computed on 92.35% of net.";
+      card.appendChild(seWords);
+
+      // quarterly set-aside strip — third person, always
+      if (typeof s.quarterly_set_aside === "number") {
+        var strip = document.createElement("p");
+        strip.className = "tax-strip";
+        strip.textContent = "Fly Asshole sets aside for taxes: ~" +
+          fmt(Math.round(s.quarterly_set_aside)) +
+          "/quarter (net × 25% ÷ 4, covering self-employment + a cushion toward income tax — SIMULATION, not advice).";
+        card.appendChild(strip);
+      }
 
       var note = document.createElement("p");
       note.className = "tax-note";
@@ -522,6 +658,7 @@
     hideTip();
     renderChart();
     renderTable();
+    renderExpenses();
   }
 
   // ── boot ───────────────────────────────────────────────────────────

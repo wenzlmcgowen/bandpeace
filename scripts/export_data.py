@@ -4,11 +4,15 @@ Runs a 36-month bandsim simulation (SimClock start 2026-01-01, seed 42 —
 same pattern as bandsim/cli.py run()) and emits:
 
   site/data.json                       — monthly income rows by bucket,
-                                         monthly expense totals, per-year
-                                         Schedule C summaries
+                                         monthly expense totals AND per-category
+                                         expense rows, per-year Schedule C
+                                         summaries (incl. meals add-back bridge
+                                         + quarterly set-aside)
   site/files/schedule_c_<year>_SIMULATED.txt  (2026, 2027, 2028)
-  site/files/pnl_2026.xlsx             — copied from band-biz-sim/out/
+  site/files/pnl_2026.xlsx             — generated here (openpyxl), branded
+                                         Fly Asshole LLC, site lane names
   site/files/royalty_map_2026.csv      — copied from band-biz-sim/out/
+                                         (carries no band name)
 
 Everything is SIMULATED — seed-fiction dollars, fake band, fake EIN.
 
@@ -31,7 +35,7 @@ BANDSIM_ROOT = Path("/Users/edwardmcgowen/projects/band-biz-sim")
 sys.path.insert(0, str(BANDSIM_ROOT))
 
 from bandsim.clock import SimClock                          # noqa: E402
-from bandsim.hub.categories import SCHEDULE_C_MAP           # noqa: E402
+from bandsim.hub.categories import EXPENSE_CATEGORIES, SCHEDULE_C_MAP  # noqa: E402
 from bandsim.hub.quickhooks import QuickHooks               # noqa: E402
 from bandsim.money.banks import BankAccount, Transaction    # noqa: E402
 from bandsim.money.expenses import simulate_expenses        # noqa: E402
@@ -191,12 +195,28 @@ def schedule_c_summary(hub: QuickHooks, year: int) -> dict:
     net_profit = round(gross - total_deductions, 2)
     se_base = round(max(0.0, net_profit) * SE_NET_MULTIPLIER, 2)
     se_tax = round(se_base * SE_TAX_RATE, 2)
+
+    # the books↔tax bridge: the P&L's net (all business expenses, meals in
+    # full) differs from Schedule C net by exactly the 50% of meals that is
+    # NOT deductible — the "meals add-back"
+    books_net = round(gross - hub.business_expenses(year), 2)
+    meals_total = round(-cat_totals.get("Meals", 0.0), 2)
+    meals_addback = round(meals_total * 0.5, 2)
+
+    # quarterly set-aside heuristic: net × 25% ÷ 4 (covers SE tax + a
+    # cushion toward income tax — SIMULATION, not advice)
+    quarterly_set_aside = round(max(0.0, net_profit) * 0.25 / 4, 2)
+
     return {
         "year": year,
         "gross_receipts": gross,
         "total_deductions": total_deductions,
         "net_profit": net_profit,
         "se_tax": se_tax,
+        "books_net": books_net,
+        "meals_total": meals_total,
+        "meals_addback": meals_addback,
+        "quarterly_set_aside": quarterly_set_aside,
         "lines": {no: {"label": lab, "amount": amt} for no, (lab, amt) in
                   sorted(lines.items(), key=lambda x: (len(x[0]), x[0]))},
     }
@@ -254,6 +274,117 @@ def write_schedule_c_txt(summary: dict, path: Path) -> None:
         f.write(DISCLAIMER)
 
 
+XLSX_WATERMARK = ("SIMULATION — bandsim sandbox. Not real money. Not real books. "
+                  "Fictional demo band.")
+XLSX_TITLE = "Fly Asshole LLC (FICTIONAL DEMO BAND)"
+
+
+def pnl_rows_for(rows, exp_rows, year: int, month: int | None):
+    """P&L lines for one scope, using the SITE's lane names.
+
+    NAME ALIGNMENT NOTE: the xlsx deliberately speaks the site's language —
+    income lines are the site lanes (Live shows, Streaming royalties,
+    Publishing, Sync licensing, Other royalties, Merch — online, Other
+    income), NOT bandsim's QuickBooks categories. The QuickBooks→lane mapping
+    is bucket_statement() + the ledger routing in main(); expense lines keep
+    bandsim's category names (site shows the same)."""
+    out = [("— INCOME —", None)]
+    inc_total = 0.0
+    for b in BUCKETS:
+        v = round(sum(a for (y, m, bb), a in rows.items()
+                      if y == year and bb == b and (month is None or m == month)), 2)
+        if v:
+            out.append((b, v))
+            inc_total = round(inc_total + v, 2)
+    out.append(("Total income", inc_total))
+    out.append(("— EXPENSES —", None))
+    exp_total = 0.0
+    for c in EXPENSE_CATEGORIES + ["UNCATEGORIZED"]:
+        if c == "Personal":
+            continue
+        v = round(sum(a for (y, m, cc), a in exp_rows.items()
+                      if y == year and cc == c and (month is None or m == month)), 2)
+        if v:
+            out.append((c, v))
+            exp_total = round(exp_total + v, 2)
+    out.append(("Total expenses", exp_total))
+    out.append(("NET PROFIT", round(inc_total - exp_total, 2)))
+    return out
+
+
+def write_pnl_xlsx(rows, exp_rows, sched: dict, year: int, path: Path) -> None:
+    """Generate the downloadable P&L workbook from the SAME data as data.json
+    (replaces the copy of bandsim's out/pnl_2026.xlsx, which was branded
+    'Wenzl SimBand LLC'). One YTD tab + one tab per month; the YTD tab also
+    carries the Schedule C bridge and the quarterly set-aside arithmetic."""
+    from openpyxl import Workbook
+    from openpyxl.styles import Font
+
+    wb = Workbook()
+    bold = Font(bold=True)
+    red = Font(color="CC0000", bold=True)
+
+    def fill(ws, month: int | None, title: str, with_bridge: bool) -> None:
+        ws.append([XLSX_WATERMARK]); ws["A1"].font = red
+        ws.append([title]); ws["A2"].font = bold
+        ws.append([])
+        ws.append(["Line", "Amount (USD)"]); ws["A4"].font = bold; ws["B4"].font = bold
+        for label, amount in pnl_rows_for(rows, exp_rows, year, month):
+            if amount is None:
+                ws.append([label, ""]); ws.cell(ws.max_row, 1).font = bold
+            else:
+                ws.append([label, amount])
+                if label in ("Total income", "Total expenses", "NET PROFIT"):
+                    ws.cell(ws.max_row, 1).font = bold
+                    ws.cell(ws.max_row, 2).font = bold
+        if with_bridge:
+            net = sched["net_profit"]
+            qsa = sched["quarterly_set_aside"]
+            ws.append([])
+            ws.append(["— SCHEDULE C BRIDGE (SIMULATED) —", ""])
+            ws.cell(ws.max_row, 1).font = bold
+            ws.append(["Books net profit (above)", sched["books_net"]])
+            ws.append(["+ Meals add-back (only 50% of meals is deductible)",
+                       sched["meals_addback"]])
+            ws.append(["= Taxable net (Schedule C line 31)", net])
+            ws.cell(ws.max_row, 1).font = bold; ws.cell(ws.max_row, 2).font = bold
+            ws.append(["Self-employment tax (15.3% on 92.35% of net)", sched["se_tax"]])
+            ws.append([])
+            ws.append(["Quarterly set-aside = net × 0.25 ÷ 4", qsa])
+            ws.cell(ws.max_row, 1).font = bold; ws.cell(ws.max_row, 2).font = bold
+            ws.append([f"    = ${net:,.2f} × 0.25 ÷ 4 = ${qsa:,.2f}", ""])
+            ws.append(["    (covers self-employment tax + a cushion toward "
+                       "income tax — SIMULATION, not advice)", ""])
+        ws.column_dimensions["A"].width = 52
+        ws.column_dimensions["B"].width = 16
+
+    ws = wb.active
+    ws.title = "YTD"
+    fill(ws, None, f"{XLSX_TITLE} — P&L YTD {year}", with_bridge=True)
+    for m in range(1, 13):
+        fill(wb.create_sheet(f"{year}-{m:02d}"), m, f"P&L {year}-{m:02d}", with_bridge=False)
+    wb.save(path)
+
+
+def verify_pnl_xlsx(path: Path, rows, exp_rows, year: int) -> bool:
+    """Read the workbook back and compare every YTD line against the same
+    aggregation that feeds data.json — the download must equal the page."""
+    from openpyxl import load_workbook
+    ws = load_workbook(path, read_only=True)["YTD"]
+    got = {}
+    for r in ws.iter_rows(min_row=5, max_col=2, values_only=True):
+        if r[0] and isinstance(r[1], (int, float)):
+            got[r[0]] = round(r[1], 2)
+    ok = True
+    for label, amount in pnl_rows_for(rows, exp_rows, year, None):
+        if amount is None:
+            continue
+        if got.get(label) != amount:
+            ok = False
+            print(f"  XLSX MISMATCH {year} '{label}': xlsx {got.get(label)} vs data {amount}")
+    return ok
+
+
 def main() -> int:
     clock, hub, landed, engine = run_sim()
 
@@ -290,6 +421,18 @@ def main() -> int:
         for y in YEARS for m in range(1, 13)
     ]
 
+    # per-category expense rows (kind == "expense" only — Personal is kind
+    # "personal" and stays off the business books, same as the sim's P&L)
+    exp_rows: dict[tuple[int, int, str], float] = {}
+    for e in hub.entries:
+        if e.kind != "expense" or e.date.year not in YEARS:
+            continue
+        key = (e.date.year, e.date.month, e.category)
+        exp_rows[key] = round(exp_rows.get(key, 0.0) - e.amount, 2)
+    expense_categories = [c for c in EXPENSE_CATEGORIES + ["UNCATEGORIZED"]
+                          if c != "Personal"
+                          and any(cc == c for (_, _, cc) in exp_rows)]
+
     # ── reconciliation ───────────────────────────────────────────────────
     print("bandpeace export — reconciliation (seed", SEED, ",", MONTHS, "months)")
     ok = True
@@ -320,10 +463,22 @@ def main() -> int:
                 ok = False
                 print(f"  MONTHLY MISMATCH {y}-{m:02d}: buckets ${bucket_m} vs ledger ${ledger_m}")
 
+    # expense category rows must sum to the monthly expense totals
+    for y in YEARS:
+        for m in range(1, 13):
+            cat_sum = round(sum(a for (yy, mm, _), a in exp_rows.items()
+                                if yy == y and mm == m), 2)
+            total = hub.business_expenses(y, m)
+            if cat_sum != total:
+                ok = False
+                print(f"  EXPENSE MISMATCH {y}-{m:02d}: categories ${cat_sum} "
+                      f"vs total ${total}")
+
     if not ok:
         print("RECONCILIATION FAILED — data.json NOT written.")
         return 1
     print("  monthly royalty attribution: OK, all 36 months to the penny")
+    print("  expense category rows: OK, sum to monthly totals in all 36 months")
 
     # ── schedule C summaries + txt files ─────────────────────────────────
     FILES.mkdir(parents=True, exist_ok=True)
@@ -335,23 +490,39 @@ def main() -> int:
         if not cross_check_schedule_c(hub, s, scratch):
             print("SCHEDULE C CROSS-CHECK FAILED — data.json NOT written.")
             return 1
+        # the bridge must hold: books net + meals add-back = taxable net
+        if abs(s["books_net"] + s["meals_addback"] - s["net_profit"]) > 0.011:
+            print(f"  BRIDGE MISMATCH {y}: books {s['books_net']} + addback "
+                  f"{s['meals_addback']} != taxable {s['net_profit']}")
+            return 1
         schedules[str(y)] = s
         write_schedule_c_txt(s, FILES / f"schedule_c_{y}_SIMULATED.txt")
         print(f"  Schedule C {y}: gross ${s['gross_receipts']:,.2f}  deductions "
               f"${s['total_deductions']:,.2f}  net ${s['net_profit']:,.2f}  SE tax ${s['se_tax']:,.2f}"
               f"  [matches bandsim build_filing]")
+        print(f"        bridge: books net ${s['books_net']:,.2f} + meals add-back "
+              f"${s['meals_addback']:,.2f} (meals ${s['meals_total']:,.2f}) = taxable "
+              f"${s['net_profit']:,.2f}   set-aside ~${s['quarterly_set_aside']:,.2f}/qtr")
     shutil.rmtree(scratch, ignore_errors=True)
 
     streams_avg = avg_monthly_streams(engine.statements)
     print(f"  avg monthly streams (distributor store lines / {MONTHS} months): {streams_avg:,}")
 
-    # ── copy artifacts from the sim's out/ dir ───────────────────────────
-    for name in ("pnl_2026.xlsx", "royalty_map_2026.csv"):
-        src = BANDSIM_ROOT / "out" / name
-        if src.exists():
-            shutil.copy2(src, FILES / name)
-        else:
-            print(f"  WARNING: {src} missing — run the sim's CLI first")
+    # ── downloadable artifacts ───────────────────────────────────────────
+    # pnl_2026.xlsx is GENERATED here (Fly Asshole branding, site lane names)
+    xlsx_path = FILES / "pnl_2026.xlsx"
+    write_pnl_xlsx(rows, exp_rows, schedules["2026"], 2026, xlsx_path)
+    if not verify_pnl_xlsx(xlsx_path, rows, exp_rows, 2026):
+        print("XLSX VERIFICATION FAILED — export aborted.")
+        return 1
+    print(f"  wrote {xlsx_path.name}: YTD + 12 month tabs, every YTD line == data.json")
+
+    # royalty_map csv carries no band name (checked) — copy as-is
+    src = BANDSIM_ROOT / "out" / "royalty_map_2026.csv"
+    if src.exists():
+        shutil.copy2(src, FILES / "royalty_map_2026.csv")
+    else:
+        print(f"  WARNING: {src} missing — run the sim's CLI first")
 
     # ── data.json ────────────────────────────────────────────────────────
     data = {
@@ -371,6 +542,14 @@ def main() -> int:
             if v != 0
         ],
         "expenses": expenses,
+        "expense_categories": expense_categories,
+        "expenses_by_category": [
+            {"year": y, "month": m, "category": c, "amount": v}
+            for (y, m, c), v in sorted(
+                exp_rows.items(),
+                key=lambda kv: (kv[0][0], kv[0][1], expense_categories.index(kv[0][2])))
+            if v != 0
+        ],
         "schedule_c": schedules,
     }
     out_path = SITE / "data.json"
