@@ -344,6 +344,18 @@
         });
       }
       return livePost(Object.assign({ action: 'add' }, fields));
+    },
+    saveNotes: function (id, notes) {
+      if (app.demo) {
+        return demoReply(function () {
+          var t = demoFind(id);
+          if (!t) return { ok: false, error: 'no such task' };
+          t.notes = notes;
+          t.updated = new Date().toISOString();
+          return { ok: true, task: Object.assign({}, t) };
+        });
+      }
+      return livePost({ action: 'edit', id: id, fields: { notes: notes } });
     }
   };
 
@@ -586,37 +598,40 @@
       stamp.textContent = doneStamp(task.done_at);
     }
 
-    /* details drawer — only when there's something to show */
+    /* details drawer — every card opens one (that's where notes live) */
     var body = node.querySelector('.card-body');
     var drawer = node.querySelector('.card-drawer');
-    var hasExtra = !!(task.details || task.notes);
-    if (hasExtra) {
-      if (task.details) {
-        var dEl = drawer.querySelector('.drawer-details');
-        dEl.hidden = false;
-        dEl.textContent = String(task.details);
-      }
-      if (task.notes) {
-        var nEl = drawer.querySelector('.drawer-notes');
-        nEl.hidden = false;
-        nEl.textContent = String(task.notes);
-      }
-      drawer.querySelector('.drawer-meta').textContent =
-        (task.id || '') + (task.source ? ' · ' + task.source : '');
-      drawer.hidden = !app.openDrawers[task.id];
-      var toggleDrawer = function () {
-        app.openDrawers[task.id] = !app.openDrawers[task.id];
-        drawer.hidden = !app.openDrawers[task.id];
-      };
-      body.addEventListener('click', toggleDrawer);
-      body.addEventListener('keydown', function (ev) {
-        if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); toggleDrawer(); }
-      });
-    } else {
-      body.setAttribute('data-static', '');
-      body.removeAttribute('role');
-      body.removeAttribute('tabindex');
+    if (task.details) {
+      var dEl = drawer.querySelector('.drawer-details');
+      dEl.hidden = false;
+      dEl.textContent = String(task.details);
     }
+    if (task.notes) {
+      var nEl = drawer.querySelector('.drawer-notes');
+      nEl.hidden = false;
+      nEl.textContent = String(task.notes);
+    }
+    drawer.querySelector('.drawer-meta').textContent =
+      (task.id || '') + (task.source ? ' · ' + task.source : '');
+    drawer.hidden = !app.openDrawers[task.id];
+    var toggleDrawer = function () {
+      app.openDrawers[task.id] = !app.openDrawers[task.id];
+      drawer.hidden = !app.openDrawers[task.id];
+    };
+    body.addEventListener('click', toggleDrawer);
+    body.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); toggleDrawer(); }
+    });
+
+    /* the note composer */
+    var noteForm = drawer.querySelector('.note-form');
+    var noteInput = drawer.querySelector('.note-input');
+    noteForm.addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      var text = noteInput.value;
+      noteInput.value = '';
+      doAddNote(task, text);
+    });
 
     var circle = node.querySelector('.done-circle');
     circle.setAttribute('aria-label', isDone
@@ -700,6 +715,46 @@
     }).catch(function () {
       delete app.busy[task.id];
       task.status = prev.status; task.done_at = prev.done_at;
+      render();
+      toast("can't reach the board");
+    });
+  }
+
+  /* A note is a dated line appended to the card's notes — pure, testable. */
+  function appendNote(existing, text, now) {
+    var t = String(text || '').trim();
+    if (!t) return null;
+    var d = (now instanceof Date) ? now : new Date();
+    var mo = new Intl.DateTimeFormat('en-US', { timeZone: LA_TZ, month: 'short' }).format(d);
+    var day = new Intl.DateTimeFormat('en-US', { timeZone: LA_TZ, day: 'numeric' }).format(d);
+    var line = mo + ' ' + day + ' — ' + t;
+    var prev = String(existing || '').trim();
+    return prev ? prev + '\n' + line : line;
+  }
+
+  function doAddNote(task, text) {
+    var next = appendNote(task.notes, text);
+    if (next === null) return;
+    var key = 'note:' + task.id;
+    if (app.busy[key]) return;
+    app.busy[key] = true;
+    var prev = task.notes || '';
+    task.notes = next;
+    app.openDrawers[task.id] = true;   /* keep the drawer open through rerender */
+    render();
+    engine.saveNotes(task.id, next).then(function (res) {
+      delete app.busy[key];
+      if (res && res.ok) {
+        if (res.task) mergeTask(res.task);
+        render();
+      } else {
+        task.notes = prev;
+        render();
+        toast("that didn't save — try again");
+      }
+    }).catch(function () {
+      delete app.busy[key];
+      task.notes = prev;
       render();
       toast("can't reach the board");
     });
@@ -878,7 +933,8 @@
       sortTasks: sortTasks,
       deadlineInfo: deadlineInfo,
       parseFragment: parseFragment,
-      buildViews: buildViews
+      buildViews: buildViews,
+      appendNote: appendNote
     };
   }
 })();
