@@ -139,11 +139,13 @@
     var views = [{ slug: 'master', name: 'Master', emoji: '🐼' }];
     (Array.isArray(team) ? team : []).forEach(function (member) {
       if (!member || !member.name) return;
-      views.push({
+      var v = {
         slug: String(member.name).toLowerCase(),
         name: String(member.name),
         emoji: member.emoji ? String(member.emoji) : '•'
-      });
+      };
+      if (member.photo) v.photo = String(member.photo);
+      views.push(v);
     });
     views.forEach(function (view) {
       var open = sortTasks(tasks, view.slug).filter(function (t) { return t.status !== 'done'; });
@@ -157,6 +159,16 @@
   }
 
   /* ── demo data (obviously fake — Alex & Sam, everything "(demo)") ── */
+
+  function demoFace(initial, bg) {
+    var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96">' +
+      '<rect width="96" height="96" fill="' + bg + '"/>' +
+      '<text x="48" y="63" font-family="Arial, sans-serif" font-size="46" font-weight="700" ' +
+      'fill="#ffffff" text-anchor="middle">' + initial + '</text></svg>';
+    var b64 = (typeof btoa === 'function') ? btoa(svg) : '';
+    return b64 ? 'data:image/svg+xml;base64,' + b64 : '';
+  }
+
 
   function makeDemoData(now) {
     var base = now instanceof Date ? now : new Date();
@@ -179,7 +191,9 @@
     }
     return {
       team: [
-        { name: 'Alex', emoji: '🎸' },
+        /* Alex gets a generated placeholder portrait so the demo also shows
+           how a photo looks; Sam shows the emoji fallback. */
+        { name: 'Alex', emoji: '🎸', photo: demoFace('A', '#7c4dff') },
         { name: 'Sam', emoji: '🥁' }
       ],
       tasks: [
@@ -496,7 +510,7 @@
     grid.textContent = '';
     views.forEach(function (view) {
       var node = els.tplTile.content.firstElementChild.cloneNode(true);
-      node.querySelector('.tile-emoji').textContent = view.emoji;
+      setFace(node.querySelector('.tile-emoji'), view, 'avatar');
       node.querySelector('.tile-name').textContent = view.name;
       var badge = node.querySelector('.tile-badge');
       if (view.open > 0) {
@@ -509,9 +523,32 @@
     });
   }
 
+  /* Put a face in `holder`: circular photo when the member has one,
+     their emoji otherwise. */
+  function setFace(holder, view, cls) {
+    holder.textContent = '';
+    if (view.photo) {
+      var img = document.createElement('img');
+      img.className = cls;
+      img.alt = '';
+      img.src = view.photo;
+      img.addEventListener('error', function () {
+        holder.textContent = view.emoji;   /* broken photo → emoji fallback */
+      });
+      holder.appendChild(img);
+    } else {
+      holder.textContent = view.emoji;
+    }
+  }
+
   function renderBoard(view) {
     show('view-board');
-    els.boardTitle.textContent = view.emoji + ' ' + view.name;
+    els.boardTitle.textContent = '';
+    var face = document.createElement('span');
+    face.className = 'title-face';
+    setFace(face, view, 'avatar avatar-sm');
+    els.boardTitle.appendChild(face);
+    els.boardTitle.appendChild(document.createTextNode(' ' + view.name));
     els.boardTitle.dataset.slug = view.slug;
 
     var stack = els.cardStack;

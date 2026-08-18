@@ -31,7 +31,7 @@ const SPREADSHEET_NAME = 'Psycho Panda Board (private)';
 const LOCK_WAIT_MS = 20000;
 
 const TASK_HEADERS = ['id', 'title', 'details', 'owner', 'deadline', 'priority', 'status', 'created', 'updated', 'done_at', 'source', 'notes'];
-const TEAM_HEADERS = ['name', 'emoji', 'active'];
+const TEAM_HEADERS = ['name', 'emoji', 'active', 'photo'];
 // The real roster is injected by setup-board.command from the private secrets
 // file ('__PANDA_TEAM__' → a JSON array of [name, emoji, active] rows), so no
 // real names live in this public repo. With the placeholder still in place we
@@ -72,6 +72,7 @@ function doPost(e) {
       case 'done': return setStatus_(body.id, 'done');
       case 'reopen': return setStatus_(body.id, 'open');
       case 'edit': return editTask_(body.id, body.fields);
+      case 'team-set': return teamSet_(body);
       default: return fail_('unknown action');
     }
   });
@@ -156,7 +157,10 @@ function createBoardIfMissing_() {
   team.getRange(1, 1, team.getMaxRows(), TEAM_HEADERS.length).setNumberFormat('@');
   team.getRange(1, 1, 1, TEAM_HEADERS.length).setValues([TEAM_HEADERS]).setFontWeight('bold');
   team.setFrozenRows(1);
-  team.getRange(2, 1, TEAM_SEED.length, TEAM_HEADERS.length).setValues(TEAM_SEED);
+  var seed = TEAM_SEED.map(function (r) {
+    return [r[0], r[1], r[2], r[3] || ''];   // pad to the photo column
+  });
+  team.getRange(2, 1, seed.length, TEAM_HEADERS.length).setValues(seed);
 
   props.setProperty('SHEET_ID', ss.getId());
   return ss;
@@ -239,16 +243,31 @@ function findTask_(sheet, id) {
 
 // -------------------------------------------------------------------- actions
 
+/** Older sheets were born with 3 Team columns; quietly add the 4th. */
+function ensureTeamPhotoCol_(teamSheet) {
+  var d1 = String(teamSheet.getRange(1, 4).getValue()).trim();
+  if (d1 !== 'photo') {
+    teamSheet.getRange(1, 4).setNumberFormat('@').setValue('photo').setFontWeight('bold');
+    teamSheet.getRange(1, 4, Math.max(teamSheet.getMaxRows(), 2), 1).setNumberFormat('@');
+  }
+}
+
 function listPayload_(ss) {
   var team = [];
   var teamSheet = ss.getSheetByName('Team');
+  ensureTeamPhotoCol_(teamSheet);
   var lastTeam = teamSheet.getLastRow();
   if (lastTeam >= 2) {
     var tv = teamSheet.getRange(2, 1, lastTeam - 1, TEAM_HEADERS.length).getValues();
     for (var i = 0; i < tv.length; i++) {
       var name = String(tv[i][0]).trim();
       var active = String(tv[i][2]).trim().toLowerCase();
-      if (name && active === 'yes') team.push({ name: name, emoji: String(tv[i][1]).trim() });
+      if (name && active === 'yes') {
+        var member = { name: name, emoji: String(tv[i][1]).trim() };
+        var photo = String(tv[i][3] || '').trim();
+        if (photo) member.photo = photo;
+        team.push(member);
+      }
     }
   }
 
@@ -264,6 +283,63 @@ function listPayload_(ss) {
   }
 
   return { ok: true, team: team, tasks: tasks, generated: nowIso_() };
+}
+
+/**
+ * Upsert a Team row by name (case-insensitive): emoji / photo / active are
+ * each optional and only touched when present in the body. photo accepts an
+ * https URL or a data:image/… URI (≤ 45k chars — sheet cells cap at 50k),
+ * or '' to clear.
+ */
+function teamSet_(body) {
+  var name = (typeof body.name === 'string') ? body.name.trim() : '';
+  if (!name) return fail_('name required');
+
+  var photo = null;
+  if ('photo' in body) {
+    photo = (typeof body.photo === 'string') ? body.photo.trim() : '';
+    var okPhoto = photo === '' ||
+      /^https:\/\/[^\s"]+$/.test(photo) ||
+      /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(photo);
+    if (!okPhoto || photo.length > 45000) return fail_('bad photo (https url or small data uri)');
+  }
+  var emoji = ('emoji' in body) ? String(body.emoji || '').trim() : null;
+  var active = null;
+  if ('active' in body) {
+    active = String(body.active || '').trim().toLowerCase();
+    if (active !== 'yes' && active !== 'no') return fail_("bad active (yes or no)");
+  }
+
+  var lock = lock_();
+  try {
+    var ss = createBoardIfMissing_();
+    var sheet = ss.getSheetByName('Team');
+    ensureTeamPhotoCol_(sheet);
+
+    var row = 0;
+    var last = sheet.getLastRow();
+    if (last >= 2) {
+      var names = sheet.getRange(2, 1, last - 1, 1).getValues();
+      for (var i = 0; i < names.length; i++) {
+        if (String(names[i][0]).trim().toLowerCase() === name.toLowerCase()) { row = i + 2; break; }
+      }
+    }
+    if (!row) {
+      row = last + 1;
+      sheet.getRange(row, 1, 1, TEAM_HEADERS.length).setNumberFormat('@');
+      sheet.getRange(row, 1).setValue(name);
+      if (active === null) active = 'yes';
+      if (emoji === null) emoji = '🐼';
+    }
+    if (emoji !== null) sheet.getRange(row, 2).setValue(emoji);
+    if (active !== null) sheet.getRange(row, 3).setValue(active);
+    if (photo !== null) sheet.getRange(row, 4).setValue(photo);
+
+    var v = sheet.getRange(row, 1, 1, TEAM_HEADERS.length).getValues()[0];
+    return { ok: true, member: { name: String(v[0]).trim(), emoji: String(v[1]).trim(), active: String(v[2]).trim(), photo: String(v[3] || '').trim() } };
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 function addTask_(body) {

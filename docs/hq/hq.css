@@ -246,7 +246,23 @@ body.demo #view-landing, body.demo #view-board { padding-top: var(--banner-h); }
 
 .tile:active { transform: scale(0.97); }
 
-.tile-emoji { font-size: 1.9rem; line-height: 1; }
+.tile-emoji { font-size: 1.9rem; line-height: 1; display: grid; place-items: center; }
+
+/* circular faces (Google-style avatars) */
+.avatar {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.18);
+}
+
+.avatar-sm { width: 30px; height: 30px; }
+
+.title-face { display: inline-block; }
+.title-face:empty { display: none; }
+.board-title .avatar { display: inline-block; vertical-align: -9px; }
 
 .tile-name { flex: 1; font-size: 1.12rem; font-weight: 700; letter-spacing: 0.02em; }
 
