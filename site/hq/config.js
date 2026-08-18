@@ -2,4 +2,4 @@
    Placeholder on purpose: board-backend/setup-board.command injects the real
    Apps Script /exec URL here at setup time. Never hand-edit a token into this
    file — the key rides in the URL fragment, not in the repo. */
-window.PP_CONFIG = { apiUrl: "" };
+window.PP_CONFIG = { apiUrl: "https://script.google.com/macros/s/AKfycbwhIzmAAHGYuWyiu5zFg7utPD1jRhJyduaWZxr0UYD5WyFaWidHiqj43He5WzsxrmahTQ/exec" };
