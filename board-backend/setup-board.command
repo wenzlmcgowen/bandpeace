@@ -257,8 +257,21 @@ if [ -f "$CLASP_STATE" ]; then
 else
   gap
   say "🏗   Creating the engine inside your Google account (10–20 seconds, quiet is normal)..."
-  npx --yes @google/clasp create --type webapp --title "Psycho Panda Board Engine" --rootDir "$WORKDIR" >/dev/null 2>&1 || true
+  # (clasp v3 renamed things: no --type webapp anymore — standalone default is
+  # right; the web-app nature comes from appsscript.json. Keep the error log so
+  # the Apps Script API toggle wall is caught HERE too, not only at push.)
+  npx --yes @google/clasp create --title "Psycho Panda Board Engine" --rootDir "$WORKDIR" >"$WORKDIR/create.log" 2>&1 || true
   if [ ! -f "$WORKDIR/.clasp.json" ]; then
+    if grep -qi "Apps Script API" "$WORKDIR/create.log"; then
+      STEP=5
+      open "https://script.google.com/home/usersettings" 2>/dev/null || true
+      gap
+      say "⚙️   One Google switch needs flipping — I opened the page for you."
+      say "    Turn 'Google Apps Script API' ON (top-right account must be yours),"
+      say "    wait two or three minutes (Google is slow to notice), then run me again."
+      gap
+      exit 0
+    fi
     say "    Couldn't create it automatically."
     fallback_manual
   fi
