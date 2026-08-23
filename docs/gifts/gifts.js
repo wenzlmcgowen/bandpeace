@@ -129,6 +129,7 @@ function renderProject(project) {
         <div class="form-actions"><button class="btn btn-primary" type="submit">Back this</button></div>
       </form>
       <p class="demo-line small-demo">Demo only: gifts stay in this browser. Real payout rails come next.</p>
+      <p class="demo-line small-demo">No cash today? Co-sign it or signal boost — both help the drop move.</p>
     </div>
     <aside class="feed-panel">
       ${renderViewTabs(project)}
