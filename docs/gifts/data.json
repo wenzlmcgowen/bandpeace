@@ -1,0 +1,83 @@
+{
+  "projects": [
+    {
+      "id": "rent-free-release",
+      "title": "Rent-Free Release Fund",
+      "artist": "Demo Artist A",
+      "location": "Los Angeles, CA",
+      "category": "Single + rent bridge",
+      "goal": 2400,
+      "raised": 1685,
+      "need": "Rent is due before the release is finished.",
+      "proof": "Demo project: verified estimate, budget, and update timeline would live here.",
+      "summary": "Help a vocalist finish a warm, sunset single without choosing between rent and release costs.",
+      "impact": ["Final mix/master", "Cover art + visualizer", "Two weeks of rent stability"],
+      "updates": ["Demo update: budget split is visible before anyone gives.", "Demo update: outcome proof will be posted after the project closes."],
+      "donors": [
+        {"name":"Demo Supporter 01","handle":"demo_supporter_01","avatar":"D1","amount":150,"note":"This chorus healed my week."},
+        {"name":"Demo Supporter 02","handle":"demo_supporter_02","avatar":"D2","amount":75,"note":"More music, less panic."},
+        {"name":"Demo Community Radio","handle":"demo_radio","avatar":"DR","amount":300,"note":"Playlisting this when it lands."}
+      ],
+      "comments": [
+        {"id":"rent-free-release-c1","name":"Demo Listener","handle":"demo_listener","text":"Drop the pre-save when ready. This is exactly the lane.","likes":42,"replies":[
+          {"id":"rent-free-release-c1-r1","name":"Demo Artist A","handle":"demo_artist_a","text":"I will. You all are giving this song a real life.","likes":18},
+          {"id":"rent-free-release-c1-r2","name":"Demo Community Radio","handle":"demo_radio","text":"Send it early and we will test it in the sunset slot.","likes":11}
+        ]},
+        {"id":"rent-free-release-c2","name":"Demo Artist A","handle":"demo_artist_a","text":"Crying a little. Thank you for making the quiet parts possible.","likes":31,"replies":[
+          {"id":"rent-free-release-c2-r1","name":"Demo Supporter 01","handle":"demo_supporter_01","text":"We need you making music, not drowning in invoices.","likes":12}
+        ]}
+      ]
+    },
+    {
+      "id": "dj-hard-drive-rescue",
+      "title": "DJ Hard Drive Rescue",
+      "artist": "Demo DJ B",
+      "location": "Long Beach, CA",
+      "category": "DJ tools + archive rescue",
+      "goal": 900,
+      "raised": 620,
+      "need": "A failing drive holds ten years of edits and unreleased sets.",
+      "proof": "Demo project: repair quote and archive checklist would be attached here.",
+      "summary": "Recover a decade of DJ edits, unreleased stems, and old house sets from a failing drive.",
+      "impact": ["Data recovery deposit", "Backup SSD", "Public archive mix for donors"],
+      "updates": ["Demo update: drive condition documented.", "Demo update: donors will see the recovered archive mix."],
+      "donors": [
+        {"name":"Demo Supporter 03","handle":"demo_supporter_03","avatar":"D3","amount":50,"note":"Save the edits!"},
+        {"name":"Demo Supporter 04","handle":"demo_supporter_04","avatar":"D4","amount":220,"note":"For every lost USB at the gig."},
+        {"name":"Demo Supporter 05","handle":"demo_supporter_05","avatar":"D5","amount":35,"note":"I want that archive mix."}
+      ],
+      "comments": [
+        {"id":"dj-hard-drive-rescue-c1","name":"Demo DJ B","handle":"demo_dj_b","text":"If this works, the first recovered edit goes here.","likes":27,"replies":[
+          {"id":"dj-hard-drive-rescue-c1-r1","name":"Demo Supporter 04","handle":"demo_supporter_04","text":"Make it downloadable for the donors and I am in.","likes":8}
+        ]},
+        {"id":"dj-hard-drive-rescue-c2","name":"Demo Dancer","handle":"demo_dancer","text":"Following. This is the kind of music history we lose too easily.","likes":19,"replies":[]}
+      ]
+    },
+    {
+      "id": "all-ages-house-room",
+      "title": "All-Ages House Room",
+      "artist": "BandPeace Demo Community",
+      "location": "East Hollywood, CA",
+      "category": "Room + live stream",
+      "goal": 5000,
+      "raised": 2140,
+      "need": "Young producers need a safe room to play for people, not algorithms.",
+      "proof": "Demo project: venue quote, safety plan, and payout plan would be shown here.",
+      "summary": "A sober, all-ages afternoon house room where young producers can play for people, not algorithms.",
+      "impact": ["Venue deposit", "Livestream crew", "Pay every opener"],
+      "updates": ["Demo update: every opener must be paid.", "Demo update: livestream count and receipts will be posted after the event."],
+      "donors": [
+        {"name":"Demo Supporter 06","handle":"demo_supporter_06","avatar":"D6","amount":500,"note":"For the kids who need a room."},
+        {"name":"Demo Supporter 07","handle":"demo_supporter_07","avatar":"D7","amount":120,"note":"House needs more open doors."},
+        {"name":"Demo Supporter 08","handle":"demo_supporter_08","avatar":"D8","amount":80,"note":"Will share this."}
+      ],
+      "comments": [
+        {"id":"all-ages-house-room-c1","name":"Demo Collective","handle":"demo_collective","text":"Please make this recurring.","likes":54,"replies":[
+          {"id":"all-ages-house-room-c1-r1","name":"Demo Artist","handle":"demo_artist","text":"I can help with poster art if this goes live.","likes":22},
+          {"id":"all-ages-house-room-c1-r2","name":"Demo Supporter 07","handle":"demo_supporter_07","text":"I can bring a small controller booth.","likes":14}
+        ]},
+        {"id":"all-ages-house-room-c2","name":"Demo Artist","handle":"demo_artist","text":"The poster should show the donor wall as part of the art.","likes":21,"replies":[]}
+      ]
+    }
+  ]
+}
