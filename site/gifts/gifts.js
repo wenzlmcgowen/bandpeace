@@ -123,10 +123,10 @@ function renderProject(project) {
         <div class="inline-form">
           <input name="name" required placeholder="Your name">
           <input name="handle" required placeholder="Public handle">
-          <input name="amount" required type="number" min="1" step="1" placeholder="Gift amount">
-          <input name="note" placeholder="Love note">
+          <input name="amount" required type="number" min="1" step="1" placeholder="Amount">
+          <input name="note" placeholder="Co-sign">
         </div>
-        <div class="form-actions"><button class="btn btn-primary" type="submit">Simulate gift</button></div>
+        <div class="form-actions"><button class="btn btn-primary" type="submit">Simulate backing</button></div>
       </form>
       <p class="demo-line small-demo">Demo only: gifts stay in this browser. Real payout rails come next.</p>
     </div>
@@ -141,7 +141,7 @@ function renderViewTabs(project) {
   const view = activeView(project.id);
   const tabs = [
     ['money', 'Money'],
-    ['love', 'Love'],
+    ['crew', 'Crew'],
     ['proof', 'Proof'],
   ];
   return `<div class="view-tabs" role="tablist" aria-label="${esc(project.title)} views">
@@ -151,7 +151,7 @@ function renderViewTabs(project) {
 
 function renderActivePanel(project) {
   const view = activeView(project.id);
-  if (view === 'love') return renderLovePanel(project);
+  if (view === 'crew') return renderCrewPanel(project);
   if (view === 'proof') return renderProofPanel(project);
   return renderMoneyPanel(project);
 }
@@ -160,20 +160,20 @@ function renderMoneyPanel(project) {
   const donors = sortedDonors(project);
   return `<section class="view-panel">
     <div class="panel-title"><span>Supporters</span><span>${donors.length}</span></div>
-    <p class="thread-note">Big gifts are honored here, but project discovery should count people before dollars.</p>
+    <p class="thread-note">Big backers are visible here, but project discovery should count people before dollars.</p>
     <div class="donor-list">${donors.map(renderDonor).join('')}</div>
   </section>`;
 }
-function renderLovePanel(project) {
+function renderCrewPanel(project) {
   const comments = mergedComments(project);
   const commentCount = comments.reduce((sum, comment) => sum + 1 + comment.replies.length, 0);
   return `<section class="view-panel">
-    <div class="panel-title"><span>Love notes</span><span>${commentCount}</span></div>
-    <p class="thread-note">Most-loved reasons rise to the top. This is the people-power lens.</p>
+    <div class="panel-title"><span>Co-signs</span><span>${commentCount}</span></div>
+    <p class="thread-note">Most-backed comments rise here. This is the people-power lens.</p>
     <div class="comment-list">${comments.map(comment => renderCommentThread(project.id, comment)).join('')}</div>
     <form class="comment-form" data-comment-form="${esc(project.id)}">
       <input name="handle" required placeholder="Your public handle">
-      <textarea name="text" required placeholder="Leave love, help, a contact, or a signal boost."></textarea>
+      <textarea name="text" required placeholder="Co-sign, offer help, drop a contact, or signal boost."></textarea>
       <div class="form-actions"><button class="btn btn-ghost" type="submit">Comment</button></div>
     </form>
   </section>`;
@@ -182,7 +182,7 @@ function renderProofPanel(project) {
   return `<section class="view-panel proof-panel">
     <div class="panel-title"><span>Proof + need</span><span>demo</span></div>
     <div class="proof-card"><strong>Need</strong><p>${esc(project.need)}</p></div>
-    <div class="proof-card"><strong>What gifts unlock</strong><ul>${project.impact.map(item => `<li>${esc(item)}</li>`).join('')}</ul></div>
+    <div class="proof-card"><strong>What backing unlocks</strong><ul>${project.impact.map(item => `<li>${esc(item)}</li>`).join('')}</ul></div>
     <div class="proof-card"><strong>Trust path</strong><p>${esc(project.proof)}</p></div>
     <div class="proof-card"><strong>Updates</strong><ul>${(project.updates || []).map(item => `<li>${esc(item)}</li>`).join('')}</ul></div>
   </section>`;
@@ -193,7 +193,7 @@ function renderDonor(donor) {
   const following = Boolean(state.follows[handle]);
   return `<div class="person-row">
     ${avatar(handle, donor.avatar)}
-    <div class="person-main"><span>${esc(donor.name)}</span><div class="handle">@${esc(handle)} · gave ${money.format(donor.amount)}</div><p class="note">${esc(donor.note || 'Gifted quietly.')}</p></div>
+    <div class="person-main"><span>${esc(donor.name)}</span><div class="handle">@${esc(handle)} · backed this</div><p class="note">${esc(donor.note || 'Backed quietly.')}</p></div>
     <button class="follow-btn ${following ? 'is-following' : ''}" type="button" data-follow="${esc(handle)}">${following ? 'Following' : 'Follow'}</button>
   </div>`;
 }
@@ -234,7 +234,7 @@ function wireProjectActions() {
     const id = btn.dataset.likeComment;
     state.likedComments[id] = !state.likedComments[id];
     saveState(); render();
-    toast(state.likedComments[id] ? 'Liked. This love note may move up.' : 'Like removed.');
+    toast(state.likedComments[id] ? 'Liked. This co-sign may move up.' : 'Like removed.');
   }));
   document.querySelectorAll('[data-comment-form]').forEach(form => form.addEventListener('submit', event => {
     event.preventDefault();
@@ -245,7 +245,7 @@ function wireProjectActions() {
     if (!handle || !text) return;
     state.comments[projectId] ||= [];
     state.comments[projectId].push({ id: `${projectId}-local-${Date.now()}`, name: handle, handle, text, likes: 0, replies: [] });
-    saveState(); render(); toast('Love note added in this browser.');
+    saveState(); render(); toast('Co-sign added in this browser.');
   }));
   document.querySelectorAll('[data-reply-form]').forEach(form => form.addEventListener('submit', event => {
     event.preventDefault();
@@ -266,8 +266,8 @@ function wireProjectActions() {
     const handle = String(data.handle || '').replace(/^@/, '').trim();
     if (!data.name || !handle || !amount) return;
     state.gifts[projectId] ||= [];
-    state.gifts[projectId].push({ name: String(data.name).trim(), handle, amount, note: String(data.note || 'Gifted quietly.').trim(), avatar: initials(data.name) });
-    saveState(); render(); toast(`Simulated ${money.format(amount)} gift from @${handle}.`);
+    state.gifts[projectId].push({ name: String(data.name).trim(), handle, amount, note: String(data.note || 'Backed quietly.').trim(), avatar: initials(data.name) });
+    saveState(); render(); toast(`Simulated ${money.format(amount)} backing from @${handle}.`);
   }));
 }
 
