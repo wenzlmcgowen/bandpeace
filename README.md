@@ -28,7 +28,11 @@ site/                    # source of truth; docs/ is its exact mirror (+ CNAME) 
     index.html onboard.css onboard.js
   gifts/                 # /gifts/ — simulated project gifts + supporter views
     index.html gifts.css gifts.js data.json
+  hq/                    # /hq/ — hidden team board (link-is-the-password)
+  shows/                 # /shows/ — hidden shows + logistics page (same idea)
 docs/                    # deployed copy (GitHub Pages root; keep docs/CNAME)
+board-backend/           # the Apps Script engine behind /hq/ AND /shows/
+tests/                   # node tests/engine.test.js · node tests/shows-ui.test.js
 ```
 
 Pure static — no build step, no frameworks, no CDN dependencies.
@@ -42,6 +46,59 @@ provider, on purpose**. "Connect" opens a modal explaining the real
 OAuth-style flow (login happens on the provider's page; BandPeace receives a
 revocable read-only token) and then merely *simulates* the connection. Band
 basics typed in step 1 are stored in `localStorage` only.
+
+## The two hidden pages
+
+`/hq/` (the Psycho Panda team board) and `/shows/` (Wenzl's shows and their
+travel / hotel / backstage logistics) are private pages on this public site.
+Neither has a login: the path is boring and **the key rides in the URL
+fragment** (`#pp…` / `#sh…`), which browsers never send to a server — so it
+can't reach a log, and it isn't in this repo. The real gate is the engine,
+which checks the key on every call and answers `{"ok":false,"error":"nope"}` to
+anything else.
+
+Both are served by **one** Apps Script deployment (`board-backend/Code.gs`) with
+**two different keys and two different private spreadsheets**, so the board link
+cannot open the shows and the shows link cannot open the board. One deployment
+means one thing to set up and one Google "Allow" to click:
+`board-backend/setup-board.command`.
+
+No private data is in this repo — not in the pages, not in the demo data. Both
+pages have a `#demo` mode that runs on obviously invented data with a DEMO
+banner, which is also how they're developed and tested.
+
+### /shows/ — how it gets written
+
+The page is **read-only**. Wenzl sends Edward a screenshot of a booking; Edward
+writes it in with the CLI in founder-os (`.claude/scripts/shows.py`), and the
+page picks it up. Data shape:
+
+| | |
+|---|---|
+| A **show** | title, venue, city, date (+ optional end date), status, headline, notes |
+| An **entry** | belongs to one show and one tab — `travel`, `hotel` or `backstage` — and is one of six kinds: `flight`, `stay`, `ground`, `time`, `contact`, `note` |
+
+Times are stored **exactly as the ticket writes them** (`2026-10-08T09:21`) and
+are never converted: a flight time is the time the airport shows. The page
+renders dates from the string rather than through a `Date` in the reader's
+timezone, so the same show reads as the same day from LA, Kauai or Berlin —
+there's a test that runs the formatting under five timezones to keep it that way.
+
+## Tests
+
+No dependencies, no runner — plain Node:
+
+```sh
+node tests/engine.test.js      # the Apps Script engine, on fake Google services
+node tests/shows-ui.test.js    # the /shows/ page's pure logic
+node tests/no-secrets.test.js  # nothing key-shaped got committed to this public repo
+```
+
+`tests/gas-harness.js` fakes Sheets, Properties, Lock and Utilities well enough
+to run `board-backend/Code.gs` unmodified, so engine changes can be verified
+before they're ever deployed. `tests/fake-engine-server.js` puts that same
+engine behind a local URL, which is how the founder-os CLI and the live page get
+tested end to end.
 
 ## Regenerate the data
 

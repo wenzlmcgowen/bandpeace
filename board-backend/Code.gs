@@ -22,6 +22,14 @@
  *        {"token":T,"action":"done","id":"PP-3"}
  *        {"token":T,"action":"reopen","id":"PP-3"}
  *        {"token":T,"action":"edit","id":"PP-3","fields":{...}}
+ *
+ * TWO REALMS, ONE ENGINE
+ * - The board (token 'pp…')   → the Psycho Panda team board  → sheet "Psycho Panda Board (private)"
+ * - Shows  (token 'sh…')      → the /shows/ logistics page    → sheet "Shows & Logistics (private)"
+ *   The two tokens are different secrets and open different spreadsheets, so a
+ *   leaked shows link can never reach the board (and vice versa). The shows API
+ *   lives at the bottom of this file under "SHOWS REALM"; everything above it is
+ *   the board and is untouched by it.
  */
 
 const TOKEN = '__PANDA_TOKEN__';
@@ -48,6 +56,7 @@ const DEADLINE_FORMAT = /^\d{4}-\d{2}-\d{2}$/;
 function doGet(e) {
   return respond_(function () {
     var p = (e && e.parameter) || {};
+    if (showsTokenOk_(p.token)) return showsGet_(p);
     if (!tokenOk_(p.token)) return nope_();
     var action = p.action || 'list';
     if (action === 'list') return listPayload_(getBoard_());
@@ -65,6 +74,7 @@ function doPost(e) {
       return fail_('bad json');
     }
     if (!body || typeof body !== 'object') return fail_('bad json');
+    if (showsTokenOk_(body.token)) return showsPost_(body);
     if (!tokenOk_(body.token)) return nope_();
 
     switch (body.action) {
@@ -463,4 +473,533 @@ function cleanPriority_(v) {
   var n = Number(v);
   if (isFinite(n) && Math.floor(n) === n && n >= 0) return n;
   return null;
+}
+
+// =====================================================================
+//  SHOWS REALM — the /shows/ page's engine
+// =====================================================================
+//
+//  Everything below this line is a second, independent little service that
+//  happens to share this script (so there is only ever ONE thing to deploy
+//  and ONE Google "Allow" to click). It shares nothing else with the board:
+//
+//    · a different secret ('sh…' instead of 'pp…')
+//    · a different spreadsheet ("Shows & Logistics (private)")
+//    · different actions, ids and validation
+//
+//  A leaked shows link therefore cannot open the board, and a leaked board
+//  link cannot open the shows. The committed token below is a placeholder
+//  that can never pass the format check, so this half is inert in the repo
+//  exactly like the board half is.
+//
+//  Shape of the data:
+//    Shows  — one row per show     (id SH-n)
+//    Items  — one row per logistics entry (id IT-n), each pinned to a show
+//             and to one of the three tabs: travel · hotel · backstage
+//
+//  API (token must be the shows token):
+//    GET  <exec>?token=T&action=shows
+//    POST {"token":T,"action":"show-add","title":"…","date":"YYYY-MM-DD", …}
+//         {"token":T,"action":"show-edit","id":"SH-1","fields":{…}}
+//         {"token":T,"action":"show-rm","id":"SH-1"}            (also drops its items)
+//         {"token":T,"action":"item-add","show_id":"SH-1","tab":"travel", …}
+//         {"token":T,"action":"item-edit","id":"IT-4","fields":{…}}
+//         {"token":T,"action":"item-rm","id":"IT-4"}
+
+const SHOWS_TOKEN = '__SHOWS_TOKEN__';
+const SHOWS_TOKEN_FORMAT = /^sh[A-Za-z0-9]{40,}$/;
+const SHOWS_SPREADSHEET_NAME = 'Shows & Logistics (private)';
+
+const SHOW_HEADERS = ['id', 'title', 'venue', 'city', 'date', 'end_date',
+                      'status', 'headline', 'notes', 'created', 'updated'];
+const ITEM_HEADERS = ['id', 'show_id', 'tab', 'kind', 'title', 'subtitle',
+                      'start', 'end', 'place', 'confirmation', 'phone', 'link',
+                      'details', 'sort', 'created', 'updated'];
+
+const SHOW_EDITABLE = ['title', 'venue', 'city', 'date', 'end_date', 'status', 'headline', 'notes'];
+const ITEM_EDITABLE = ['show_id', 'tab', 'kind', 'title', 'subtitle', 'start', 'end',
+                       'place', 'confirmation', 'phone', 'link', 'details', 'sort'];
+
+const SHOW_TABS = ['travel', 'hotel', 'backstage'];
+const ITEM_KINDS = ['flight', 'stay', 'ground', 'time', 'contact', 'note'];
+const SHOW_STATUSES = ['confirmed', 'hold', 'cancelled'];
+
+const DATE_ONLY_FORMAT = /^\d{4}-\d{2}-\d{2}$/;
+const DATE_TIME_FORMAT = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
+
+const SHOW_DATE_KEYS = { date: 1, end_date: 1 };
+const ITEM_DATE_KEYS = { start: 1, end: 1 };
+
+const MAX_SHORT = 300;     // titles, places, confirmations…
+const MAX_LONG = 5000;     // notes and details
+
+function showsTokenOk_(t) {
+  return typeof t === 'string' && SHOWS_TOKEN_FORMAT.test(t) && t === SHOWS_TOKEN;
+}
+
+// ------------------------------------------------------------ entry points
+
+function showsGet_(p) {
+  var action = p.action || 'shows';
+  if (action === 'shows' || action === 'list') return showsPayload_(getShowsBook_());
+  return fail_('unknown action');
+}
+
+function showsPost_(body) {
+  switch (body.action) {
+    case 'shows': return showsPayload_(getShowsBook_());
+    case 'show-add': return showAdd_(body);
+    case 'show-edit': return showEdit_(body.id, body.fields);
+    case 'show-rm': return showRm_(body.id);
+    case 'item-add': return itemAdd_(body);
+    case 'item-edit': return itemEdit_(body.id, body.fields);
+    case 'item-rm': return itemRm_(body.id);
+    default: return fail_('unknown action');
+  }
+}
+
+// ---------------------------------------------------------------- bootstrap
+
+/** The shows spreadsheet, created on the first-ever valid shows call. */
+function getShowsBook_() {
+  var props = PropertiesService.getScriptProperties();
+  var id = props.getProperty('SHOWS_SHEET_ID');
+  if (id) return SpreadsheetApp.openById(id);
+  var lock = lock_();
+  try {
+    return createShowsIfMissing_();
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/** Caller MUST hold the script lock. Idempotent. */
+function createShowsIfMissing_() {
+  var props = PropertiesService.getScriptProperties();
+  var id = props.getProperty('SHOWS_SHEET_ID');
+  if (id) return SpreadsheetApp.openById(id);
+
+  var ss = SpreadsheetApp.create(SHOWS_SPREADSHEET_NAME);
+
+  var shows = ss.getSheets()[0];
+  shows.setName('Shows');
+  initTab_(shows, SHOW_HEADERS);
+
+  var items = ss.insertSheet('Items');
+  initTab_(items, ITEM_HEADERS);
+
+  props.setProperty('SHOWS_SHEET_ID', ss.getId());
+  return ss;
+}
+
+/** Plain-text everywhere (so 2026-10-08 stays a string), bold frozen header. */
+function initTab_(sheet, headers) {
+  sheet.getRange(1, 1, sheet.getMaxRows(), headers.length).setNumberFormat('@');
+  sheet.getRange(1, 1, 1, headers.length).setValues([headers]).setFontWeight('bold');
+  sheet.setFrozenRows(1);
+}
+
+/**
+ * Next id number for a counter, e.g. nextSeq_(ss, 'SHOWS_LAST_ID', 'Shows', 'SH').
+ * Caller MUST hold the lock. Recovers from the sheet if the counter is lost,
+ * so ids stay unique even after hand-deleting rows.
+ */
+function nextSeq_(ss, propKey, tabName, prefix) {
+  var props = PropertiesService.getScriptProperties();
+  var last = parseInt(props.getProperty(propKey) || '', 10);
+  if (isNaN(last) || last < 0) {
+    last = 0;
+    var sheet = ss.getSheetByName(tabName);
+    var lastRow = sheet.getLastRow();
+    if (lastRow >= 2) {
+      var ids = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
+      var re = new RegExp('^' + prefix + '-(\\d+)$');
+      for (var i = 0; i < ids.length; i++) {
+        var m = String(ids[i][0]).match(re);
+        if (m) last = Math.max(last, parseInt(m[1], 10));
+      }
+    }
+  }
+  var next = last + 1;
+  props.setProperty(propKey, String(next));
+  return prefix + '-' + next;
+}
+
+// ------------------------------------------------------------- sheet <-> obj
+
+/** One sheet row → the object the API returns. Dates are defensive only. */
+function rowToObj_(headers, row, dateKeys) {
+  var o = {};
+  for (var i = 0; i < headers.length; i++) {
+    var key = headers[i];
+    var v = (i < row.length) ? row[i] : '';
+    if (v === null || v === undefined || v === '') {
+      o[key] = '';
+    } else if (v instanceof Date) {
+      // Someone typed straight into the sheet and Sheets ate the string.
+      o[key] = dateKeys[key]
+        ? Utilities.formatDate(v, TZ, 'yyyy-MM-dd')
+        : Utilities.formatDate(v, TZ, "yyyy-MM-dd'T'HH:mm:ssXXX");
+    } else {
+      o[key] = String(v);
+    }
+  }
+  return o;
+}
+
+function objToRow_(headers, o) {
+  return headers.map(function (h) {
+    return (o[h] === null || o[h] === undefined) ? '' : o[h];
+  });
+}
+
+function writeObjRow_(sheet, headers, r, o) {
+  var range = sheet.getRange(r, 1, 1, headers.length);
+  range.setNumberFormat('@');
+  range.setValues([objToRow_(headers, o)]);
+}
+
+/** All rows of a tab as objects (blank-id rows skipped). */
+function readAll_(sheet, headers, dateKeys) {
+  var out = [];
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2) return out;
+  var rows = sheet.getRange(2, 1, lastRow - 1, headers.length).getValues();
+  for (var i = 0; i < rows.length; i++) {
+    var o = rowToObj_(headers, rows[i], dateKeys);
+    if (o.id) out.push(o);
+  }
+  return out;
+}
+
+/** Find by id → { row, obj } or null. */
+function findById_(sheet, headers, dateKeys, id) {
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2) return null;
+  var vals = sheet.getRange(2, 1, lastRow - 1, headers.length).getValues();
+  for (var i = 0; i < vals.length; i++) {
+    if (String(vals[i][0]) === id) {
+      return { row: i + 2, obj: rowToObj_(headers, vals[i], dateKeys) };
+    }
+  }
+  return null;
+}
+
+// ----------------------------------------------------------------- payload
+
+function showsPayload_(ss) {
+  return {
+    ok: true,
+    shows: readAll_(ss.getSheetByName('Shows'), SHOW_HEADERS, SHOW_DATE_KEYS),
+    items: readAll_(ss.getSheetByName('Items'), ITEM_HEADERS, ITEM_DATE_KEYS),
+    generated: nowIso_()
+  };
+}
+
+// -------------------------------------------------------------- validation
+
+/**
+ * True only for a date that exists on a calendar. The shape check alone lets
+ * '2026-13-40' through, and a typo like that would quietly render as a show
+ * that never happens — so the day is round-tripped through Date and compared.
+ */
+function realDay_(s) {
+  var y = +s.slice(0, 4), mo = +s.slice(5, 7), d = +s.slice(8, 10);
+  if (mo < 1 || mo > 12 || d < 1 || d > 31) return false;
+  var probe = new Date(Date.UTC(y, mo - 1, d));
+  return probe.getUTCFullYear() === y && probe.getUTCMonth() === mo - 1 && probe.getUTCDate() === d;
+}
+
+function realClock_(s) {
+  var h = +s.slice(11, 13), mi = +s.slice(14, 16);
+  return h >= 0 && h <= 23 && mi >= 0 && mi <= 59;
+}
+
+/** '' → '' · a real 'YYYY-MM-DD' → itself · anything else → null (bad). */
+function cleanDate_(v) {
+  if (v === null || v === undefined || v === '') return '';
+  var s = String(v).trim();
+  return (DATE_ONLY_FORMAT.test(s) && realDay_(s)) ? s : null;
+}
+
+/** '' → '' · a real 'YYYY-MM-DD' or 'YYYY-MM-DDTHH:MM' → itself · else null.
+    No timezone conversion, ever: a flight time is written the way the
+    ticket says it, in the time of the place it happens. */
+function cleanWhen_(v) {
+  if (v === null || v === undefined || v === '') return '';
+  var s = String(v).trim().replace(' ', 'T');
+  if (DATE_ONLY_FORMAT.test(s) && realDay_(s)) return s;
+  if (DATE_TIME_FORMAT.test(s) && realDay_(s) && realClock_(s)) return s;
+  return null;
+}
+
+/** '' → fallback · a listed value (case-insensitive) → it · else null. */
+function cleanEnum_(v, allowed, fallback) {
+  if (v === null || v === undefined || String(v).trim() === '') return fallback;
+  var s = String(v).trim().toLowerCase();
+  return allowed.indexOf(s) >= 0 ? s : null;
+}
+
+/** Trim + cap a free-text field. Non-strings become ''. */
+function cleanText_(v, max) {
+  if (v === null || v === undefined) return '';
+  var s = String(v);
+  if (s.length > max) s = s.slice(0, max);
+  return s;
+}
+
+/** '' → '' · a number (or numeric string) → number · else null. */
+function cleanSort_(v) {
+  if (v === null || v === undefined || v === '') return '';
+  var n = Number(v);
+  return isFinite(n) ? n : null;
+}
+
+// ------------------------------------------------------------- show actions
+
+function showAdd_(body) {
+  var title = cleanText_(body.title, MAX_SHORT).trim();
+  if (!title) return fail_('title required');
+
+  var date = cleanDate_(body.date);
+  if (date === null) return fail_('bad date (use YYYY-MM-DD)');
+  var endDate = cleanDate_(body.end_date);
+  if (endDate === null) return fail_('bad end_date (use YYYY-MM-DD)');
+  var status = cleanEnum_(body.status, SHOW_STATUSES, 'confirmed');
+  if (status === null) return fail_('bad status (confirmed, hold or cancelled)');
+
+  var lock = lock_();
+  try {
+    var ss = createShowsIfMissing_();
+    var sheet = ss.getSheetByName('Shows');
+    var now = nowIso_();
+    var show = {
+      id: nextSeq_(ss, 'SHOWS_LAST_ID', 'Shows', 'SH'),
+      title: title,
+      venue: cleanText_(body.venue, MAX_SHORT).trim(),
+      city: cleanText_(body.city, MAX_SHORT).trim(),
+      date: date,
+      end_date: endDate,
+      status: status,
+      headline: cleanText_(body.headline, MAX_SHORT).trim(),
+      notes: cleanText_(body.notes, MAX_LONG),
+      created: now,
+      updated: now
+    };
+    writeObjRow_(sheet, SHOW_HEADERS, sheet.getLastRow() + 1, show);
+    return { ok: true, show: show };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function showEdit_(id, fields) {
+  if (typeof id !== 'string' || !id.trim()) return fail_('missing id');
+  id = id.trim();
+  if (!fields || typeof fields !== 'object') return fail_('missing fields');
+
+  // Validate everything BEFORE touching the sheet — a bad field must not
+  // leave a half-written row behind.
+  var clean = {};
+  for (var i = 0; i < SHOW_EDITABLE.length; i++) {
+    var key = SHOW_EDITABLE[i];
+    if (!Object.prototype.hasOwnProperty.call(fields, key)) continue;
+    var v = fields[key];
+    if (key === 'date' || key === 'end_date') {
+      var d = cleanDate_(v);
+      if (d === null) return fail_('bad ' + key + ' (use YYYY-MM-DD)');
+      clean[key] = d;
+    } else if (key === 'status') {
+      var st = cleanEnum_(v, SHOW_STATUSES, 'confirmed');
+      if (st === null) return fail_('bad status (confirmed, hold or cancelled)');
+      clean[key] = st;
+    } else if (key === 'title') {
+      var t = cleanText_(v, MAX_SHORT).trim();
+      if (!t) return fail_('title cannot be empty');
+      clean[key] = t;
+    } else if (key === 'notes') {
+      clean[key] = cleanText_(v, MAX_LONG);
+    } else {
+      clean[key] = cleanText_(v, MAX_SHORT).trim();
+    }
+  }
+
+  var lock = lock_();
+  try {
+    var ss = createShowsIfMissing_();
+    var sheet = ss.getSheetByName('Shows');
+    var hit = findById_(sheet, SHOW_HEADERS, SHOW_DATE_KEYS, id);
+    if (!hit) return fail_('no show with id ' + id);
+    for (var k in clean) {
+      if (Object.prototype.hasOwnProperty.call(clean, k)) hit.obj[k] = clean[k];
+    }
+    hit.obj.updated = nowIso_();
+    writeObjRow_(sheet, SHOW_HEADERS, hit.row, hit.obj);
+    return { ok: true, show: hit.obj };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/** Removing a show removes its logistics too — no orphan items, ever. */
+function showRm_(id) {
+  if (typeof id !== 'string' || !id.trim()) return fail_('missing id');
+  id = id.trim();
+  var lock = lock_();
+  try {
+    var ss = createShowsIfMissing_();
+    var showSheet = ss.getSheetByName('Shows');
+    var hit = findById_(showSheet, SHOW_HEADERS, SHOW_DATE_KEYS, id);
+    if (!hit) return fail_('no show with id ' + id);
+
+    var itemSheet = ss.getSheetByName('Items');
+    var removed = 0;
+    var lastRow = itemSheet.getLastRow();
+    if (lastRow >= 2) {
+      var vals = itemSheet.getRange(2, 1, lastRow - 1, ITEM_HEADERS.length).getValues();
+      // Bottom-up so earlier row numbers stay valid as we delete.
+      for (var i = vals.length - 1; i >= 0; i--) {
+        if (String(vals[i][1]).trim() === id) {
+          itemSheet.deleteRow(i + 2);
+          removed++;
+        }
+      }
+    }
+    showSheet.deleteRow(hit.row);
+    return { ok: true, removed: id, items_removed: removed };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+// ------------------------------------------------------------- item actions
+
+function itemAdd_(body) {
+  var showId = (typeof body.show_id === 'string') ? body.show_id.trim() : '';
+  if (!showId) return fail_('show_id required');
+
+  var tab = cleanEnum_(body.tab, SHOW_TABS, null);
+  if (tab === null) return fail_('bad tab (travel, hotel or backstage)');
+  var kind = cleanEnum_(body.kind, ITEM_KINDS, 'note');
+  if (kind === null) return fail_('bad kind (flight, stay, ground, time, contact or note)');
+
+  var title = cleanText_(body.title, MAX_SHORT).trim();
+  if (!title) return fail_('title required');
+
+  var start = cleanWhen_(body.start);
+  if (start === null) return fail_('bad start (YYYY-MM-DD or YYYY-MM-DDTHH:MM)');
+  var end = cleanWhen_(body.end);
+  if (end === null) return fail_('bad end (YYYY-MM-DD or YYYY-MM-DDTHH:MM)');
+  var sort = cleanSort_(body.sort);
+  if (sort === null) return fail_('bad sort (a number)');
+
+  var lock = lock_();
+  try {
+    var ss = createShowsIfMissing_();
+    if (!findById_(ss.getSheetByName('Shows'), SHOW_HEADERS, SHOW_DATE_KEYS, showId)) {
+      return fail_('no show with id ' + showId);
+    }
+    var sheet = ss.getSheetByName('Items');
+    var now = nowIso_();
+    var item = {
+      id: nextSeq_(ss, 'ITEMS_LAST_ID', 'Items', 'IT'),
+      show_id: showId,
+      tab: tab,
+      kind: kind,
+      title: title,
+      subtitle: cleanText_(body.subtitle, MAX_SHORT).trim(),
+      start: start,
+      end: end,
+      place: cleanText_(body.place, MAX_SHORT).trim(),
+      confirmation: cleanText_(body.confirmation, MAX_SHORT).trim(),
+      phone: cleanText_(body.phone, MAX_SHORT).trim(),
+      link: cleanText_(body.link, MAX_SHORT).trim(),
+      details: cleanText_(body.details, MAX_LONG),
+      sort: sort,
+      created: now,
+      updated: now
+    };
+    writeObjRow_(sheet, ITEM_HEADERS, sheet.getLastRow() + 1, item);
+    return { ok: true, item: item };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function itemEdit_(id, fields) {
+  if (typeof id !== 'string' || !id.trim()) return fail_('missing id');
+  id = id.trim();
+  if (!fields || typeof fields !== 'object') return fail_('missing fields');
+
+  var clean = {};
+  for (var i = 0; i < ITEM_EDITABLE.length; i++) {
+    var key = ITEM_EDITABLE[i];
+    if (!Object.prototype.hasOwnProperty.call(fields, key)) continue;
+    var v = fields[key];
+    if (key === 'tab') {
+      var tab = cleanEnum_(v, SHOW_TABS, null);
+      if (tab === null) return fail_('bad tab (travel, hotel or backstage)');
+      clean[key] = tab;
+    } else if (key === 'kind') {
+      var kind = cleanEnum_(v, ITEM_KINDS, null);
+      if (kind === null) return fail_('bad kind (flight, stay, ground, time, contact or note)');
+      clean[key] = kind;
+    } else if (key === 'start' || key === 'end') {
+      var w = cleanWhen_(v);
+      if (w === null) return fail_('bad ' + key + ' (YYYY-MM-DD or YYYY-MM-DDTHH:MM)');
+      clean[key] = w;
+    } else if (key === 'sort') {
+      var s = cleanSort_(v);
+      if (s === null) return fail_('bad sort (a number)');
+      clean[key] = s;
+    } else if (key === 'title') {
+      var t = cleanText_(v, MAX_SHORT).trim();
+      if (!t) return fail_('title cannot be empty');
+      clean[key] = t;
+    } else if (key === 'details') {
+      clean[key] = cleanText_(v, MAX_LONG);
+    } else if (key === 'show_id') {
+      var sid = cleanText_(v, MAX_SHORT).trim();
+      if (!sid) return fail_('show_id cannot be empty');
+      clean[key] = sid;
+    } else {
+      clean[key] = cleanText_(v, MAX_SHORT).trim();
+    }
+  }
+
+  var lock = lock_();
+  try {
+    var ss = createShowsIfMissing_();
+    if (clean.show_id &&
+        !findById_(ss.getSheetByName('Shows'), SHOW_HEADERS, SHOW_DATE_KEYS, clean.show_id)) {
+      return fail_('no show with id ' + clean.show_id);
+    }
+    var sheet = ss.getSheetByName('Items');
+    var hit = findById_(sheet, ITEM_HEADERS, ITEM_DATE_KEYS, id);
+    if (!hit) return fail_('no item with id ' + id);
+    for (var k in clean) {
+      if (Object.prototype.hasOwnProperty.call(clean, k)) hit.obj[k] = clean[k];
+    }
+    hit.obj.updated = nowIso_();
+    writeObjRow_(sheet, ITEM_HEADERS, hit.row, hit.obj);
+    return { ok: true, item: hit.obj };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function itemRm_(id) {
+  if (typeof id !== 'string' || !id.trim()) return fail_('missing id');
+  id = id.trim();
+  var lock = lock_();
+  try {
+    var ss = createShowsIfMissing_();
+    var sheet = ss.getSheetByName('Items');
+    var hit = findById_(sheet, ITEM_HEADERS, ITEM_DATE_KEYS, id);
+    if (!hit) return fail_('no item with id ' + id);
+    sheet.deleteRow(hit.row);
+    return { ok: true, removed: id };
+  } finally {
+    lock.releaseLock();
+  }
 }

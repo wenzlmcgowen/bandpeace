@@ -1,16 +1,21 @@
 #!/bin/bash
 #
-# setup-board.command — plugs the Psycho Panda board engine into your Google
-# account. Double-click me once, on the Mac mini. About a minute, start to
-# finish. Safe to run again any time — re-running just updates the same engine.
+# setup-board.command — plugs the engine behind BOTH private pages into your
+# Google account: the Psycho Panda board at /hq/ and the shows + logistics
+# page at /shows/. Double-click me once, on the Mac mini. About a minute,
+# start to finish. Safe to run again any time — re-running just updates the
+# same engine.
 #
 # What I do, in plain English:
 #   1. Take the engine code sitting next to me (Code.gs)
-#   2. Put your secret key into a TEMPORARY copy (the files in the repo never
-#      change, and the key is never shown on screen)
+#   2. Put your two secret keys into a TEMPORARY copy (the files in the repo
+#      never change, and no key is ever shown on screen)
 #   3. Upload it to your Google account as a tiny private web service
-#   4. Check it answers, wire its address into the /hq/ page, and hand you
-#      the one link to text to Jess.
+#   4. Check it answers, wire its address into both pages, and hand you the
+#      two links — one for the team, one for you.
+#
+# Two keys, two separate private spreadsheets: whoever has the board link
+# cannot see the shows, and whoever has the shows link cannot see the board.
 
 set -Eeuo pipefail
 
@@ -41,6 +46,7 @@ bail() {
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 SECRETS_FILE="$HOME/workspace/founder-os/secrets/panda-board.env"
+SHOWS_SECRETS_FILE="$HOME/workspace/founder-os/secrets/shows.env"
 CLASP_STATE="$HOME/.panda-board-clasp.json"   # remembers WHICH engine is ours between runs
 DEPLOY_STATE="$HOME/.panda-board-deploy-id"   # remembers WHICH deployment, so re-runs update it in place
 
@@ -66,47 +72,70 @@ finish() {
   rm -f "$tmp_env"
   chmod 600 "$SECRETS_FILE"
 
-  # 2) Point the /hq/ page at the engine (both the source and the deployed copy).
-  #    If the deployed copy of the page is somehow missing, recreate it from
-  #    the source copy rather than stranding you at the finish line.
-  if [ ! -d "$REPO_DIR/docs/hq" ] && [ -d "$REPO_DIR/site/hq" ]; then
-    mkdir -p "$REPO_DIR/docs/hq"
-    cp "$REPO_DIR/site/hq/"* "$REPO_DIR/docs/hq/"
+  # 1b) Same for the shows key file.
+  if [ -f "$SHOWS_SECRETS_FILE" ]; then
+    local tmp_shows
+    tmp_shows="$(mktemp)"
+    sed "s|^SHOWS_URL=.*|SHOWS_URL=${exec_url}|" "$SHOWS_SECRETS_FILE" > "$tmp_shows"
+    grep -q '^SHOWS_URL=' "$tmp_shows" || printf 'SHOWS_URL=%s\n' "$exec_url" >> "$tmp_shows"
+    cat "$tmp_shows" > "$SHOWS_SECRETS_FILE"
+    rm -f "$tmp_shows"
+    chmod 600 "$SHOWS_SECRETS_FILE"
   fi
+
+  # 2) Point BOTH pages at the engine (source and deployed copy of each).
+  #    If a deployed copy is somehow missing, recreate it from the source copy
+  #    rather than stranding you at the finish line.
+  local page
+  for page in hq shows; do
+    if [ ! -d "$REPO_DIR/docs/$page" ] && [ -d "$REPO_DIR/site/$page" ]; then
+      mkdir -p "$REPO_DIR/docs/$page"
+      cp "$REPO_DIR/site/$page/"* "$REPO_DIR/docs/$page/"
+    fi
+  done
   local cfg
-  for cfg in "$REPO_DIR/site/hq/config.js" "$REPO_DIR/docs/hq/config.js"; do
+  for cfg in "$REPO_DIR/site/hq/config.js" "$REPO_DIR/docs/hq/config.js" \
+             "$REPO_DIR/site/shows/config.js" "$REPO_DIR/docs/shows/config.js"; do
     if [ ! -f "$cfg" ]; then
       bail "🤔  I couldn't find $cfg" \
-           "    The /hq/ page files should exist before I run. Tell Claude and we'll sort it."
+           "    Both page folders should exist before I run. Tell Claude and we'll sort it."
     fi
     sed -i '' "s|apiUrl:[[:space:]]*\"[^\"]*\"|apiUrl: \"${exec_url}\"|" "$cfg"
   done
 
-  # 3) Publish just the board page files to the live site — nothing else,
-  #    even if other changes happen to be sitting around in the repo.
-  if [ -z "$(git -C "$REPO_DIR" status --porcelain -- site/hq docs/hq)" ]; then
+  # 3) Publish just those page files to the live site — nothing else, even if
+  #    other changes happen to be sitting around in the repo.
+  if [ -z "$(git -C "$REPO_DIR" status --porcelain -- site/hq docs/hq site/shows docs/shows)" ]; then
     say "    (the site already had this address — nothing new to publish)"
   else
-    git -C "$REPO_DIR" add -- site/hq docs/hq
-    git -C "$REPO_DIR" commit -m "Connect HQ board engine" -- site/hq docs/hq >/dev/null
+    git -C "$REPO_DIR" add -- site/hq docs/hq site/shows docs/shows
+    git -C "$REPO_DIR" commit -m "Connect the private pages to the engine" \
+        -- site/hq docs/hq site/shows docs/shows >/dev/null
     if git -C "$REPO_DIR" push >/dev/null 2>&1; then
       say "    Published. The live page catches up in a minute or two."
     else
       gap
       say "⚠️   I saved everything but couldn't push to GitHub just now (maybe no internet?)."
-      say "    The board won't load on the live site until that happens."
+      say "    The pages won't load on the live site until that happens."
       say "    Fix: run me again later, or tell Claude: \"push the bandpeace site\"."
     fi
   fi
 
   gap
   say "──────────────────────────────────────────────"
-  say "🎉  The board is ALIVE. This is the one link that matters:"
+  say "🎉  Both pages are ALIVE. These are the two links that matter:"
   gap
+  say "    🐼  The team board — text this one to Jess:"
   say "        https://bandpeace.com/hq/#${BOARD_TOKEN}"
   gap
-  say "    Text it to Jess. The link IS the key — anyone who has it can use"
-  say "    the board, so share it like a house key, not like a flyer."
+  if [ -n "${SHOWS_TOKEN:-}" ]; then
+    say "    🎟️   Your shows + logistics — keep this one:"
+    say "        https://bandpeace.com/shows/#${SHOWS_TOKEN}"
+    gap
+  fi
+  say "    Each link IS its own key, and they are different keys — the board"
+  say "    link can't open your shows and the shows link can't open the board."
+  say "    Share them like house keys, not like flyers."
   say "──────────────────────────────────────────────"
   gap
 }
@@ -166,6 +195,15 @@ probe_ok() {
   printf '%s' "$out" | grep -q '"ok":true'
 }
 
+# Same question, asked with the OTHER key. Checked separately because the two
+# halves can only be proven separately — a healthy board says nothing about
+# whether the shows key made it into the uploaded code.
+probe_shows_ok() {
+  local url="$1" out=""
+  out="$(curl -sL --max-time 30 "${url}?token=${SHOWS_TOKEN}&action=shows" 2>/dev/null || true)"
+  printf '%s' "$out" | grep -q '"ok":true'
+}
+
 # clasp writes the absolute temp-folder path into .clasp.json as rootDir; that
 # folder is gone by the next run, which would strand every re-run (including a
 # key rotation). Pin rootDir to "." — we always run clasp from inside $WORKDIR.
@@ -197,7 +235,31 @@ if ! printf '%s' "$BOARD_TOKEN" | grep -Eq '^pp[A-Za-z0-9]{40,}$'; then
   bail "🔍  The secret key file exists but the key inside looks off." \
        "    Tell Claude: \"the panda board token looks wrong\" (don't paste the key anywhere)."
 fi
-say "✅  Found the secret key. (It stays secret — I never show it.)"
+say "✅  Found the board key. (It stays secret — I never show it.)"
+
+# The shows page has its OWN key, in its own file. If that file isn't there
+# yet, make one — this should stay a single double-click, not a scavenger hunt.
+if [ ! -f "$SHOWS_SECRETS_FILE" ]; then
+  mkdir -p "$(dirname "$SHOWS_SECRETS_FILE")"
+  NEW_SHOWS_TOKEN="sh$(LC_ALL=C tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 48)"
+  {
+    printf '# Shows page (bandpeace.com/shows/) — the key that IS the link.\n'
+    printf '# Never commit, never paste into a chat.\n'
+    printf 'SHOWS_TOKEN=%s\n' "$NEW_SHOWS_TOKEN"
+    printf '# Filled in by setup-board.command once the engine is live:\n'
+    printf 'SHOWS_URL=\n'
+  } > "$SHOWS_SECRETS_FILE"
+  chmod 600 "$SHOWS_SECRETS_FILE"
+  unset NEW_SHOWS_TOKEN
+  say "✅  Made a fresh key for the shows page (saved privately, never shown)."
+fi
+
+SHOWS_TOKEN="$(sed -n 's/^SHOWS_TOKEN=//p' "$SHOWS_SECRETS_FILE" | head -n 1 | tr -d '[:space:]')"
+if ! printf '%s' "$SHOWS_TOKEN" | grep -Eq '^sh[A-Za-z0-9]{40,}$'; then
+  bail "🔍  The shows key file exists but the key inside looks off." \
+       "    Tell Claude: \"the shows token looks wrong\" (don't paste the key anywhere)."
+fi
+say "✅  Found the shows key too."
 
 # ---------------------------------------------------------------- step 2: temp copy
 STEP=2
@@ -222,16 +284,17 @@ TEAM_JSON="$(TEAM_ROSTER="$TEAM_ROSTER" node -e '
   process.stdout.write(JSON.stringify(rows));
 ')"
 
-# Inject the key and the roster via awk+ENVIRON so neither ever appears on a
-# command line (command lines are visible to every process on the machine).
-BOARD_TOKEN="$BOARD_TOKEN" TEAM_JSON="$TEAM_JSON" awk '{
+# Inject both keys and the roster via awk+ENVIRON so none of them ever appears
+# on a command line (command lines are visible to every process on the machine).
+BOARD_TOKEN="$BOARD_TOKEN" SHOWS_TOKEN="$SHOWS_TOKEN" TEAM_JSON="$TEAM_JSON" awk '{
   gsub(/__PANDA_TOKEN__/, ENVIRON["BOARD_TOKEN"]);
+  gsub(/__SHOWS_TOKEN__/, ENVIRON["SHOWS_TOKEN"]);
   gsub(/__PANDA_TEAM__/, ENVIRON["TEAM_JSON"]);
   print
 }' "$SCRIPT_DIR/Code.gs" > "$WORKDIR/Code.gs"
 cp "$SCRIPT_DIR/appsscript.json" "$WORKDIR/appsscript.json"
-say "✅  Made a temporary copy of the engine with the key inside."
-say "    (The files in the repo are untouched and still hold only a placeholder.)"
+say "✅  Made a temporary copy of the engine with both keys inside."
+say "    (The files in the repo are untouched and still hold only placeholders.)"
 
 # ---------------------------------------------------------------- step 3: Google login
 STEP=3
@@ -364,6 +427,17 @@ if ! probe_ok "$EXEC_URL"; then
 fi
 say "✅  The engine answered. It even created its Google Sheet"
 say "    ('Psycho Panda Board (private)' in your Drive) on that first hello."
+
+gap
+say "🩺  And the same check with the shows key..."
+if probe_shows_ok "$EXEC_URL"; then
+  say "✅  The shows half answered too, and made its own sheet"
+  say "    ('Shows & Logistics (private)' — a separate one, on purpose)."
+else
+  say "⚠️   The board works but the shows half didn't answer. Nothing is broken;"
+  say "    run me again in a minute. If it keeps happening, tell Claude:"
+  say "    \"the shows half of the engine isn't answering\"."
+fi
 
 # ---------------------------------------------------------------- step 7: wire it all up
 finish "$EXEC_URL"

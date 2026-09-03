@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0a0a0f">
+<title>Shows</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0a0f'/%3E%3Ctext x='16' y='23' font-size='17' text-anchor='middle'%3E%F0%9F%8E%9F%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="shows.css">
+</head>
+<body>
+
+<div id="app">
+
+  <div id="demo-banner" class="demo-banner" hidden>DEMO — made-up shows, nothing real</div>
+
+  <!-- No key, or the wrong one: a stranger sees nothing worth poking at. -->
+  <section id="state-tease" class="center-state" hidden>
+    <div class="tease-mark" aria-hidden="true">🎟️</div>
+    <p class="tease-text">nothing to see here.</p>
+  </section>
+
+  <!-- Key is fine, engine not plugged in yet -->
+  <section id="state-noengine" class="center-state" hidden>
+    <div class="friendly-card">
+      <div class="friendly-emoji" aria-hidden="true">🎟️</div>
+      <p>The shows engine isn't plugged in yet — there's one setup step to run
+      (<code>board-backend/setup-board.command</code>).</p>
+    </div>
+  </section>
+
+  <section id="state-loading" class="center-state" hidden>
+    <div class="loading-mark" aria-hidden="true">🎟️</div>
+    <p class="loading-text">pulling up the shows…</p>
+  </section>
+
+  <section id="state-retry" class="center-state" hidden>
+    <div class="friendly-card">
+      <div class="friendly-emoji" aria-hidden="true">🎟️</div>
+      <p>Can't reach the shows right now.</p>
+      <button id="retry-btn" class="retry-btn" type="button">try again</button>
+    </div>
+  </section>
+
+  <!-- ── the list of shows ──────────────────────────────────────── -->
+  <section id="view-list" hidden>
+    <header class="top">
+      <h1 class="top-title">SHOWS</h1>
+      <button id="list-refresh" class="icon-btn refresh-btn" type="button" aria-label="Refresh">↻</button>
+    </header>
+    <main class="list-main">
+      <div id="show-list" class="show-list"></div>
+      <p id="list-empty" class="empty-note" hidden>
+        No shows on here yet. Send Edward a screenshot and the first one appears.
+      </p>
+      <p id="list-stamp" class="stamp"></p>
+    </main>
+  </section>
+
+  <!-- ── one show ───────────────────────────────────────────────── -->
+  <section id="view-show" hidden>
+    <div class="show-sticky">
+    <header class="top show-top">
+      <button id="back-btn" class="icon-btn" type="button" aria-label="Back to all shows">←</button>
+      <div class="show-headings">
+        <h1 id="show-title" class="show-title"></h1>
+        <p id="show-sub" class="show-sub"></p>
+      </div>
+      <button id="show-refresh" class="icon-btn refresh-btn" type="button" aria-label="Refresh">↻</button>
+    </header>
+
+    <nav class="tabs" role="tablist" aria-label="Show logistics">
+      <button class="tab" type="button" role="tab" id="tab-travel" aria-controls="panel" data-tab="travel">
+        <span class="tab-label">Travel</span><span class="tab-count"></span>
+      </button>
+      <button class="tab" type="button" role="tab" id="tab-hotel" aria-controls="panel" data-tab="hotel">
+        <span class="tab-label">Hotel</span><span class="tab-count"></span>
+      </button>
+      <button class="tab" type="button" role="tab" id="tab-backstage" aria-controls="panel" data-tab="backstage">
+        <span class="tab-label">Backstage</span><span class="tab-count"></span>
+      </button>
+      <span id="tab-ink" class="tab-ink" aria-hidden="true"></span>
+    </nav>
+    </div>
+
+    <main class="show-main">
+      <div id="show-when" class="when-strip" hidden></div>
+      <div id="panel" class="panel" role="tabpanel"></div>
+      <p id="show-notes" class="show-notes" hidden></p>
+      <p id="show-stamp" class="stamp"></p>
+    </main>
+  </section>
+
+  <div id="toast" class="toast" role="status" hidden></div>
+
+</div>
+
+<!-- ── templates ─────────────────────────────────────────────────── -->
+
+<template id="tpl-show-card">
+  <button class="show-card" type="button">
+    <span class="date-block">
+      <span class="date-mon"></span>
+      <span class="date-day"></span>
+      <span class="date-yr"></span>
+    </span>
+    <span class="card-body">
+      <span class="card-top">
+        <span class="card-title"></span>
+        <span class="card-when"></span>
+      </span>
+      <span class="card-where"></span>
+      <span class="card-headline" hidden></span>
+      <span class="card-tabs">
+        <span class="card-status" hidden></span>
+      </span>
+    </span>
+  </button>
+</template>
+
+<template id="tpl-item">
+  <article class="item">
+    <header class="item-head">
+      <span class="item-icon" aria-hidden="true"></span>
+      <span class="item-heads">
+        <span class="item-title"></span>
+        <span class="item-sub" hidden></span>
+      </span>
+    </header>
+    <div class="item-when" hidden></div>
+    <div class="item-rows"></div>
+    <div class="item-actions"></div>
+  </article>
+</template>
+
+<template id="tpl-run">
+  <article class="item run">
+    <header class="item-head">
+      <span class="item-icon" aria-hidden="true">🕗</span>
+      <span class="item-heads"><span class="item-title">Run of show</span></span>
+    </header>
+    <ol class="run-list"></ol>
+  </article>
+</template>
+
+<script src="config.js"></script>
+<script src="shows.js"></script>
+</body>
+</html>
