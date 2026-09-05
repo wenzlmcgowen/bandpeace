@@ -15,10 +15,27 @@
 
   <div id="demo-banner" class="demo-banner" hidden>DEMO — made-up shows, nothing real</div>
 
-  <!-- No key, or the wrong one: a stranger sees nothing worth poking at. -->
-  <section id="state-tease" class="center-state" hidden>
-    <div class="tease-mark" aria-hidden="true">🎟️</div>
-    <p class="tease-text">nothing to see here.</p>
+  <!-- The way in. Deliberately says nothing about what's behind it. -->
+  <section id="state-login" class="center-state" hidden>
+    <form id="login-form" class="login-card">
+      <div class="login-mark" aria-hidden="true">🎟️</div>
+      <label class="visually-hidden" for="login-pw">Password</label>
+      <input id="login-pw" class="login-input" type="password" name="password"
+             autocomplete="current-password" enterkeyhint="go"
+             autocapitalize="off" autocorrect="off" spellcheck="false"
+             placeholder="password" required>
+      <button id="login-go" class="login-btn" type="submit">open</button>
+      <p id="login-msg" class="login-msg" role="status"></p>
+    </form>
+  </section>
+
+  <!-- A browser too old (or a page served over plain http) to do the maths. -->
+  <section id="state-nocrypto" class="center-state" hidden>
+    <div class="friendly-card">
+      <div class="friendly-emoji" aria-hidden="true">🎟️</div>
+      <p>This browser can't unlock the page. Open
+      <code>https://bandpeace.com/shows/</code> in Safari or Chrome.</p>
+    </div>
   </section>
 
   <!-- Key is fine, engine not plugged in yet -->

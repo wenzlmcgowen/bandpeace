@@ -8,12 +8,28 @@ const S = require('../site/shows/shows.js');
 const KEY = 'sh' + 'k'.repeat(44);
 const NOW = new Date('2026-10-01T12:00:00-07:00');   // a Thursday in LA
 
+/* A throwaway password's key, computed once with Python. Never the real one. */
+const KNOWN_VECTOR =
+  'shd2c4f90d65d851fd84e458243175153224b6688a3137c0aaca8be474c398dde1';
+
 let passed = 0;
 const failures = [];
+const pending = [];
 
+/* A check may return a promise (the key stretching is async in both worlds);
+   those are gathered and waited for before anything is reported. */
 function check(name, fn) {
-  try { fn(); passed++; }
-  catch (err) { failures.push(name + ' — ' + err.message); }
+  try {
+    const result = fn();
+    if (result && typeof result.then === 'function') {
+      pending.push(result.then(
+        () => { passed++; },
+        (err) => { failures.push(name + ' — ' + (err && err.message)); }
+      ));
+    } else {
+      passed++;
+    }
+  } catch (err) { failures.push(name + ' — ' + err.message); }
 }
 function eq(actual, expected, what) {
   const a = JSON.stringify(actual), b = JSON.stringify(expected);
@@ -47,12 +63,29 @@ check('demo needs no key', () => {
   eq(S.parseFragment('#demo/SH-1/backstage').showId, 'SH-1');
 });
 
-check('rubbish, short keys and empty hashes get nothing', () => {
-  ['', '#', '#hello', '#pp' + 'x'.repeat(44), '#sh' + 'x'.repeat(10),
+check('an empty hash asks for nothing in particular', () => {
+  /* Not "locked" — just no instructions. Whether anything shows depends on
+     whether this device already knows the key. */
+  ['', '#'].forEach((h) => {
+    eq(S.parseFragment(h), { demo: false, token: null, showId: null, tab: null },
+       'for ' + JSON.stringify(h));
+  });
+});
+
+check('rubbish and short keys get nothing', () => {
+  ['#hello', '#pp' + 'x'.repeat(44), '#sh' + 'x'.repeat(10),
    '#' + KEY + '/SH-2/hotel/extra', '#' + KEY + '/nope', '#' + KEY + '/SH-2/kitchen',
-   '#' + KEY + '/SH-x'].forEach((h) => {
+   '#' + KEY + '/SH-x', '#SH-2/kitchen', '#/', '#//'].forEach((h) => {
     eq(S.parseFragment(h), null, 'for ' + JSON.stringify(h));
   });
+});
+
+check('a signed-in link carries no key at all', () => {
+  /* Once the password is typed, the device remembers the key and the address
+     bar stops carrying it — this is what those links look like. */
+  eq(S.parseFragment('#SH-2'), { demo: false, token: null, showId: 'SH-2', tab: null });
+  eq(S.parseFragment('#SH-2/hotel'), { demo: false, token: null, showId: 'SH-2', tab: 'hotel' });
+  eq(S.parseFragment('#sh-2/HOTEL').showId, 'SH-2', 'still case-forgiving');
 });
 
 check('a tab without a show is meaningless', () => {
@@ -162,6 +195,16 @@ check('"Label: value" lines become rows, sentences stay sentences', () => {
       { text: 'Bring the sax stand, the venue has none' }]);
 });
 
+check('a clock is not mistaken for a label', () => {
+  /* Straight from real data: this rendered as the row "LAND 12 → 25 PM …". */
+  eq(S.parseDetails('Land 12:25 PM on check-in day, fly out 1:55 PM on check-out day'),
+     [{ text: 'Land 12:25 PM on check-in day, fly out 1:55 PM on check-out day' }]);
+  eq(S.parseDetails('Doors 8:00 PM'), [{ text: 'Doors 8:00 PM' }], 'no colon at all');
+  /* But a real label whose value starts with a time still works. */
+  eq(S.parseDetails('Soundcheck: 5:30 PM'),
+     [{ label: 'Soundcheck', value: '5:30 PM' }]);
+});
+
 check('a colon inside a sentence does not fake a label', () => {
   const rows = S.parseDetails('Remember this one thing about the gig: park behind the venue');
   eq(rows, [{ text: 'Remember this one thing about the gig: park behind the venue' }]);
@@ -241,6 +284,37 @@ check('a show over several days shows the range', () => {
   eq(S.showDateLine({ date: '2026-10-08', end_date: '2026-10-10' }), 'Thu Oct 8 → Sat Oct 10');
   eq(S.showDateLine({ date: '2026-10-08', end_date: '2026-10-08' }), 'Thu Oct 8');
   eq(S.showDateLine({ date: '' }), 'date to come');
+});
+
+/* ── the password ───────────────────────────────────────────────── */
+
+check('the password stretches to exactly the key the CLI writes', () => {
+  /* THE pinning test. The page derives the engine's key from the password in
+     the browser; founder-os/.claude/scripts/shows.py derives it from the same
+     password in Python and writes it into secrets/shows.env. If those two ever
+     stop agreeing — a changed salt, a changed round count, a changed encoding —
+     the page silently stops opening. The vector below is a throwaway password,
+     never the real one, computed once with Python's hashlib and hard-coded so
+     BOTH sides are anchored to it.
+
+     python3 -c "import hashlib;print('sh'+hashlib.pbkdf2_hmac('sha256',
+       b'correct horse battery staple', b'bandpeace-shows-v1', 4000000, 32).hex())"
+  */
+  eq(S.KDF, { salt: 'bandpeace-shows-v1', iterations: 4000000, bits: 256 }, 'parameters');
+
+  const { webcrypto } = require('crypto');
+  return S.deriveToken('correct horse battery staple', webcrypto.subtle).then((token) => {
+    eq(token, KNOWN_VECTOR, 'derived key');
+    ok(/^sh[A-Za-z0-9]{40,}$/.test(token), 'and it is shaped like an engine key');
+  });
+});
+
+check('a different password gives a different key', () => {
+  const { webcrypto } = require('crypto');
+  return Promise.all([
+    S.deriveToken('correct horse battery staple', webcrypto.subtle),
+    S.deriveToken('correct horse battery stapl', webcrypto.subtle)
+  ]).then(([a, b]) => ok(a !== b, 'one character changes everything'));
 });
 
 /* ── where you are in the day ───────────────────────────────────── */
@@ -339,6 +413,8 @@ check('nothing real can hide in the demo data', () => {
 
 /* ── report ────────────────────────────────────────────────────── */
 
-console.log('\nshows page: ' + passed + ' passed, ' + failures.length + ' failed');
-failures.forEach((f) => console.log('  ✗ ' + f));
-process.exit(failures.length ? 1 : 0);
+Promise.all(pending).then(() => {
+  console.log('\nshows page: ' + passed + ' passed, ' + failures.length + ' failed');
+  failures.forEach((f) => console.log('  ✗ ' + f));
+  process.exit(failures.length ? 1 : 0);
+});

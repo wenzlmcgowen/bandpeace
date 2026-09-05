@@ -20,6 +20,15 @@
   /* ── constants ─────────────────────────────────────────────────── */
 
   var TOKEN_RE = /^sh[A-Za-z0-9]{40,}$/;
+  var SHOW_ID_RE = /^SH-\d+$/i;
+
+  /* The password never leaves this browser. It is stretched into the engine's
+     key here, and only that key is ever sent — so the page still holds no
+     secret and the repo still holds no secret. The salt is public on purpose
+     (that's what a salt is for); the cost is what protects a short password.
+     4,000,000 rounds is roughly 1½ seconds on a phone — paid once per device,
+     and paid again by anybody guessing, on every single guess. */
+  var KDF = { salt: 'bandpeace-shows-v1', iterations: 4000000, bits: 256 };
   var LA_TZ = 'America/Los_Angeles';
   var DAY_MS = 86400000;
   var POLL_MS = 120000;
@@ -35,36 +44,74 @@
 
   /* ── pure helpers (unit-tested in Node) ────────────────────────── */
 
-  /* parseFragment("#sh…"), ("#sh…/SH-2"), ("#sh…/SH-2/hotel"), ("#demo/SH-1")
-     → { demo, token, showId, tab }. Anything malformed → null. */
+  /* parseFragment("#sh…"), ("#sh…/SH-2/hotel"), ("#demo/SH-1"), ("#SH-2"),
+     ("#SH-2/hotel"), ("") → { demo, token, showId, tab }. Malformed → null.
+
+     The key is OPTIONAL in the address now. Someone who signed in with the
+     password has the key remembered on the device, so their links look like
+     "#SH-2/hotel" and the secret never sits in the address bar. A full "#sh…"
+     link still works exactly as before — that's the same key, written out. */
   function parseFragment(hash) {
     var h = String(hash == null ? '' : hash);
     if (h.charAt(0) === '#') h = h.slice(1);
     try { h = decodeURIComponent(h); } catch (e) { /* keep raw */ }
-    if (!h) return null;
-    var parts = h.split('/');
-    if (parts.length > 3) return null;
+    if (!h) return { demo: false, token: null, showId: null, tab: null };
 
-    var head = parts[0];
-    var demo = head === 'demo';
-    if (!demo && !TOKEN_RE.test(head)) return null;
+    var parts = h.split('/');
+    var demo = false;
+    var token = null;
+
+    if (parts[0] === 'demo') {
+      demo = true;
+      parts = parts.slice(1);
+    } else if (TOKEN_RE.test(parts[0])) {
+      token = parts[0];
+      parts = parts.slice(1);
+    }
+    if (parts.length > 2) return null;
 
     var showId = null;
-    if (parts.length > 1 && parts[1]) {
-      var raw = parts[1].toUpperCase();
-      if (!/^SH-\d+$/.test(raw)) return null;
+    if (parts.length > 0 && parts[0]) {
+      var raw = parts[0].toUpperCase();
+      if (!SHOW_ID_RE.test(raw)) return null;
       showId = raw;
     }
     var tab = null;
-    if (parts.length > 2 && parts[2]) {
-      var t = parts[2].toLowerCase();
+    if (parts.length > 1 && parts[1]) {
+      var t = parts[1].toLowerCase();
       if (TABS.indexOf(t) < 0) return null;
       tab = t;
     }
     /* A tab with no show is meaningless — treat it as malformed. */
     if (tab && !showId) return null;
+    /* Nothing recognisable at all in a non-empty hash. */
+    if (!demo && !token && !showId) return null;
 
-    return { demo: demo, token: demo ? null : head, showId: showId, tab: tab };
+    return { demo: demo, token: token, showId: showId, tab: tab };
+  }
+
+  /* deriveToken("a password") → Promise<"sh…">, the engine's key.
+     Node and the browser must land on the same string — the CLI writes the
+     key from Python's PBKDF2 and the page has to arrive at the same one, so
+     there's a test pinning both to a known value. */
+  function deriveToken(password, subtle) {
+    var crypt = subtle || (typeof crypto !== 'undefined' && crypto.subtle);
+    if (!crypt) return Promise.reject(new Error('no webcrypto'));
+    var bytes = new TextEncoder().encode(String(password));
+    var salt = new TextEncoder().encode(KDF.salt);
+    return crypt.importKey('raw', bytes, 'PBKDF2', false, ['deriveBits'])
+      .then(function (key) {
+        return crypt.deriveBits(
+          { name: 'PBKDF2', salt: salt, iterations: KDF.iterations, hash: 'SHA-256' },
+          key, KDF.bits);
+      })
+      .then(function (bits) {
+        var hex = '';
+        new Uint8Array(bits).forEach(function (b) {
+          hex += (b < 16 ? '0' : '') + b.toString(16);
+        });
+        return 'sh' + hex;
+      });
   }
 
   /* LA calendar date of a Date, as UTC-midnight millis (DST-safe day math). */
@@ -184,9 +231,18 @@
       return line.trim();
     }).filter(Boolean).map(function (line) {
       var m = /^([^:]{1,40}):\s*(.+)$/.exec(line);
-      /* Not a label if the "label" is really a sentence, or the line is a URL. */
-      if (m && !/^https?$|^tel$|^mailto$/i.test(m[1]) && m[1].split(' ').length <= 5) {
-        return { label: m[1].trim(), value: m[2].trim() };
+      if (m) {
+        var label = m[1];
+        var afterColon = line.slice(label.length + 1);
+        /* A colon with digits on both sides is a clock, not a label —
+           "Land 12:25 PM on check-in day" is a sentence, and splitting it
+           gave the row "LAND 12 → 25 PM on check-in day". */
+        var isClock = /\d$/.test(label) && /^\d/.test(afterColon);
+        /* Nor is it a label if it's really a sentence, or a URL scheme. */
+        var isScheme = /^https?$|^tel$|^mailto$/i.test(label);
+        if (!isClock && !isScheme && label.trim().split(/\s+/).length <= 5) {
+          return { label: label.trim(), value: m[2].trim() };
+        }
       }
       return { text: line };
     });
@@ -407,7 +463,8 @@
     loadError: false,
     rejected: false,
     pollTimer: null,
-    toastTimer: null
+    toastTimer: null,
+    signingIn: false
   };
 
   var els = {};
@@ -470,8 +527,11 @@
         app.loadError = false;
         render();
       } else {
-        /* Wrong key → the same nothing a stranger sees. */
         app.rejected = true;
+        /* Only forget the remembered key when the engine actually REFUSED it
+           ("nope"). Any other complaint is the engine having a moment, and
+           throwing him back to the password screen for that would be wrong. */
+        if (res && res.error === 'nope') forgetToken();
         render();
       }
     }, function () {
@@ -515,21 +575,19 @@
   /* ── routing ───────────────────────────────────────────────────── */
 
   function onRoute() {
-    var parsed = parseFragment(window.location.hash);
-    var rawEmpty = !String(window.location.hash).replace(/^#/, '');
-
-    if (!parsed && rawEmpty) {
-      /* Some apps strip fragments — fall back to the remembered key. */
-      var stored = readStoredToken();
-      if (stored) parsed = { demo: false, token: stored, showId: null, tab: null };
-    }
+    /* Anything unreadable in the hash is treated as no hash at all, rather
+       than as a locked door — it's the same person on the same device. */
+    var parsed = parseFragment(window.location.hash) ||
+                 { demo: false, token: null, showId: null, tab: null };
 
     var prevToken = app.token;
     var prevDemo = app.demo;
 
     app.route = parsed;
-    app.demo = !!(parsed && parsed.demo);
-    app.token = (parsed && parsed.token) || null;
+    app.demo = !!parsed.demo;
+    /* A key written into the link wins; otherwise use the one this device
+       remembered when the password was typed. */
+    app.token = app.demo ? null : (parsed.token || readStoredToken());
 
     if (app.token) storeToken(app.token);
     /* A different key is a different world: drop what the old one loaded,
@@ -548,12 +606,15 @@
     render();
   }
 
-  function base() { return app.demo ? 'demo' : (app.token || ''); }
-
+  /* Deliberately does NOT put the key back in the address bar: once the
+     device remembers it, moving around the page leaves no secret on screen,
+     in a screenshot, or in whatever the browser syncs. */
   function go(showId, tab) {
-    var next = '#' + base();
-    if (showId) next += '/' + showId;
-    if (showId && tab) next += '/' + tab;
+    var parts = [];
+    if (app.demo) parts.push('demo');
+    if (showId) parts.push(showId);
+    if (showId && tab) parts.push(tab);
+    var next = '#' + parts.join('/');
     if (window.location.hash !== next) window.location.hash = next;
     else onRoute();
   }
@@ -561,12 +622,25 @@
   /* ── rendering ─────────────────────────────────────────────────── */
 
   function showState(which) {
-    ['tease', 'noengine', 'loading', 'retry'].forEach(function (name) {
+    ['login', 'nocrypto', 'noengine', 'loading', 'retry'].forEach(function (name) {
       var node = el('state-' + name);
       if (node) node.hidden = which !== name;
     });
     els.viewList.hidden = which !== 'list';
     els.viewShow.hidden = which !== 'show';
+    if (which === 'login' && els.loginPw && !prefersTouch()) {
+      /* Focus the field on a laptop; never on a phone, where it would throw
+         the keyboard up before he's even looked at the screen. */
+      try { els.loginPw.focus(); } catch (e) { /* fine */ }
+    }
+  }
+
+  function prefersTouch() {
+    return !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+  }
+
+  function hasCrypto() {
+    return !!(typeof crypto !== 'undefined' && crypto.subtle && window.isSecureContext);
   }
 
   function currentShow() {
@@ -578,7 +652,10 @@
     document.body.classList.toggle('demo', app.demo);
     els.demoBanner.hidden = !app.demo;
 
-    if (!app.route || app.rejected) { showState('tease'); return; }
+    if (!app.demo && (!app.token || app.rejected)) {
+      showState(hasCrypto() ? 'login' : 'nocrypto');
+      return;
+    }
     if (!app.demo && !apiUrl()) { showState('noengine'); return; }
     if (app.loadError) { showState('retry'); return; }
     if (!app.data) { showState('loading'); return; }
@@ -1007,6 +1084,77 @@
     } catch (e) { return false; }
   }
 
+  /* ── signing in ────────────────────────────────────────────────── */
+
+  function loginMsg(text, bad) {
+    if (!els.loginMsg) return;
+    els.loginMsg.textContent = text || '';
+    els.loginMsg.classList.toggle('is-bad', !!bad);
+  }
+
+  function submitLogin() {
+    var password = els.loginPw.value;
+    if (!password || app.signingIn) return;
+
+    /* The stretching takes a second or two on a phone. Silence reads as
+       broken, so the button says what it is doing. */
+    app.signingIn = true;
+    els.loginGo.disabled = true;
+    els.loginGo.textContent = 'checking…';
+    loginMsg('');
+
+    /* Let the browser paint the "checking…" before the maths blocks it. */
+    setTimeout(function () {
+      deriveToken(password).then(function (token) {
+        app.token = token;
+        app.rejected = false;
+        app.loadError = false;
+        app.data = null;
+        storeToken(token);
+        return load().then(function (res) {
+          if (res && res.ok) {
+            app.data = {
+              shows: Array.isArray(res.shows) ? res.shows : [],
+              items: Array.isArray(res.items) ? res.items : [],
+              generated: res.generated || ''
+            };
+            endLogin(true);
+            ensurePoll();
+            render();
+          } else {
+            forgetToken();
+            app.token = null;
+            endLogin(false);
+            loginMsg('that password doesn\u2019t open this', true);
+            render();
+          }
+        });
+      }).catch(function (err) {
+        forgetToken();
+        app.token = null;
+        endLogin(false);
+        loginMsg(String(err && err.message) === 'no webcrypto'
+          ? 'this browser can\u2019t unlock the page'
+          : 'couldn\u2019t check that just now — try again', true);
+        render();
+      });
+    }, 40);
+  }
+
+  function endLogin(won) {
+    app.signingIn = false;
+    els.loginGo.disabled = false;
+    els.loginGo.textContent = 'open';
+    if (won) {
+      els.loginPw.value = '';
+      loginMsg('');
+    }
+  }
+
+  function forgetToken() {
+    try { window.localStorage.removeItem('showsToken'); } catch (e) { /* fine */ }
+  }
+
   /* ── init ──────────────────────────────────────────────────────── */
 
   function init() {
@@ -1027,6 +1175,10 @@
       panel: el('panel'),
       tabInk: el('tab-ink'),
       toast: el('toast'),
+      loginForm: el('login-form'),
+      loginPw: el('login-pw'),
+      loginGo: el('login-go'),
+      loginMsg: el('login-msg'),
       tplShowCard: el('tpl-show-card'),
       tplItem: el('tpl-item'),
       tplRun: el('tpl-run'),
@@ -1044,6 +1196,11 @@
         }
       });
     });
+    els.loginForm.addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      submitLogin();
+    });
+
     el('retry-btn').addEventListener('click', function () {
       app.loadError = false;
       render();
@@ -1076,6 +1233,8 @@
   if (typeof module !== 'undefined') {
     module.exports = {
       parseFragment: parseFragment,
+      deriveToken: deriveToken,
+      KDF: KDF,
       dayInfo: dayInfo,
       splitShows: splitShows,
       itemsFor: itemsFor,

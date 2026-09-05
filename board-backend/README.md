@@ -12,7 +12,7 @@ and one Google "Allow" to click — but two completely separate halves:
 | Page | Key | Its own private sheet |
 | --- | --- | --- |
 | `/hq/` — the team board | `pp…`, from `founder-os/secrets/panda-board.env` | Psycho Panda Board (private) |
-| `/shows/` — shows + logistics | `sh…`, from `founder-os/secrets/shows.env` | Shows & Logistics (private) |
+| `/shows/` — shows + logistics | `sh…`, from `founder-os/secrets/shows.env` — **derived from the page's password**, see below | Shows & Logistics (private) |
 
 The keys are different secrets and open different spreadsheets, so the board
 link can never reach the shows and the shows link can never reach the board.
@@ -57,6 +57,18 @@ CLI both just talk to the engine, and the engine talks to the sheet. Both can
 be opened and hand-corrected in Google Sheets any day; every column is stored
 as plain text so a date typed by hand stays the text you typed.
 
+## The shows key and the shows password
+
+The engine only ever sees a key, exactly like the board. What's different is
+where that key comes from: `/shows/` asks for a password and stretches it into
+the key in the browser (PBKDF2-SHA256, 4,000,000 rounds, public salt) — so the
+password never travels and never lands here. `shows.py set-password "…"` does
+the identical maths in Python and writes the result to
+`founder-os/secrets/shows.env`; this setup script injects it from there.
+
+The consequence to remember: **changing the password means re-running this
+script.** Until you do, the engine still expects the key the old password made.
+
 ## Testing it without deploying
 
 Apps Script has no local runtime, so `../tests/gas-harness.js` fakes Sheets,
@@ -72,10 +84,11 @@ Google.
 
 ## Rotating a key (if a link ever leaks)
 
-1. Put a fresh key in the file for that half —
-   `founder-os/secrets/panda-board.env` (`PANDA_BOARD_TOKEN=pp…`) or
-   `founder-os/secrets/shows.env` (`SHOWS_TOKEN=sh…`) — at least 40
-   letters/numbers after the prefix.
+1. Put a fresh key in the file for that half. For the board, edit
+   `founder-os/secrets/panda-board.env` (`PANDA_BOARD_TOKEN=pp…`, at least 40
+   letters/numbers after the prefix). For the shows, don't hand-write a key —
+   run `python3 .claude/scripts/shows.py set-password "…"`, which derives it
+   from the new password and saves it.
 2. Double-click `setup-board.command` again. It re-uploads the engine with the
    new key(s) and prints the new links.
 3. Share the new link. The old one stops working the moment the new engine code

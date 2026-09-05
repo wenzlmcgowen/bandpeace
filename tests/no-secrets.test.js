@@ -22,6 +22,15 @@ const KEY_SHAPE = /\b(pp|sh)[A-Za-z0-9]{40,}\b/g;
 const OBVIOUSLY_FAKE = /^(pp|sh)(.)\2{39,}$/;
 const PLACEHOLDERS = new Set(['__PANDA_TOKEN__', '__SHOWS_TOKEN__']);
 
+/* One real-shaped key is allowed here, by exact value and nothing else: the
+   key of the throwaway password "correct horse battery staple", which pins the
+   page's stretching maths to Python's in tests/shows-ui.test.js. It opens
+   nothing. Widening this list is how a real key would eventually slip past —
+   so it takes exact strings, never patterns. */
+const ALLOWED = new Set([
+  'shd2c4f90d65d851fd84e458243175153224b6688a3137c0aaca8be474c398dde1'
+]);
+
 const findings = [];
 let scanned = 0;
 
@@ -42,7 +51,7 @@ function walk(dir) {
     KEY_SHAPE.lastIndex = 0;
     while ((m = KEY_SHAPE.exec(text)) !== null) {
       const hit = m[0];
-      if (OBVIOUSLY_FAKE.test(hit) || PLACEHOLDERS.has(hit)) continue;
+      if (OBVIOUSLY_FAKE.test(hit) || PLACEHOLDERS.has(hit) || ALLOWED.has(hit)) continue;
       findings.push(rel + ' holds something shaped like a real key (' +
         hit.slice(0, 4) + '…, ' + hit.length + ' chars)');
     }

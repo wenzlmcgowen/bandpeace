@@ -51,11 +51,21 @@ basics typed in step 1 are stored in `localStorage` only.
 
 `/hq/` (the Psycho Panda team board) and `/shows/` (Wenzl's shows and their
 travel / hotel / backstage logistics) are private pages on this public site.
-Neither has a login: the path is boring and **the key rides in the URL
-fragment** (`#pp…` / `#sh…`), which browsers never send to a server — so it
-can't reach a log, and it isn't in this repo. The real gate is the engine,
-which checks the key on every call and answers `{"ok":false,"error":"nope"}` to
-anything else.
+Neither holds any data: the real gate is the engine, which checks a key on
+every call and answers `{"ok":false,"error":"nope"}` to anything else.
+
+**`/hq/` — the key rides in the URL fragment** (`#pp…`), which browsers never
+send to a server, so it can't reach a log and it isn't in this repo.
+
+**`/shows/` — a password, stretched into that same kind of key.** The page asks
+for a password and runs it through PBKDF2-SHA256 (4,000,000 rounds, public
+salt) in the browser; the result *is* the engine's key. So the password itself
+never travels, the page and the repo still hold no secret, and the cost of the
+stretching is what stands behind a human-memorable password — every guess an
+attacker makes costs them the same second and a half it costs the owner, once,
+per device. A full `#sh…` link still works: that's the same key written out.
+Signing in remembers the key on that device and *stops* putting it in the
+address bar.
 
 Both are served by **one** Apps Script deployment (`board-backend/Code.gs`) with
 **two different keys and two different private spreadsheets**, so the board link
@@ -66,12 +76,23 @@ means one thing to set up and one Google "Allow" to click:
 No private data is in this repo — not in the pages, not in the demo data. Both
 pages have a `#demo` mode that runs on obviously invented data with a DEMO
 banner, which is also how they're developed and tested.
+`tests/no-secrets.test.js` fails the build if anything key-shaped is ever
+committed here.
+
+Honest limit, written down so nobody has to rediscover it: a password on a
+static public page is worth exactly what the password is worth. There is no
+server to rate-limit guesses — the engine's address is in `shows/config.js`,
+in the open — so the only brake is the 4,000,000 rounds. That is a real brake
+against a wordlist and no brake at all against someone who guesses right.
 
 ### /shows/ — how it gets written
 
 The page is **read-only**. Wenzl sends Edward a screenshot of a booking; Edward
 writes it in with the CLI in founder-os (`.claude/scripts/shows.py`), and the
-page picks it up. Data shape:
+page picks it up. The same CLI owns the password —
+`shows.py set-password "…"` re-derives the key and writes it to
+`founder-os/secrets/shows.env`, and re-running `setup-board.command` is what
+tells the engine about it. Data shape:
 
 | | |
 |---|---|

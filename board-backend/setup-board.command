@@ -129,12 +129,16 @@ finish() {
   say "        https://bandpeace.com/hq/#${BOARD_TOKEN}"
   gap
   if [ -n "${SHOWS_TOKEN:-}" ]; then
-    say "    🎟️   Your shows + logistics — keep this one:"
+    say "    🎟️   Your shows + logistics — open this and type your password:"
+    say "        https://bandpeace.com/shows/"
+    gap
+    say "        Or skip the typing with this link, which is the same key"
+    say "        written out (treat it exactly like the password):"
     say "        https://bandpeace.com/shows/#${SHOWS_TOKEN}"
     gap
   fi
-  say "    Each link IS its own key, and they are different keys — the board"
-  say "    link can't open your shows and the shows link can't open the board."
+  say "    The two are different keys — the board link can't open your shows"
+  say "    and the shows link can't open the board."
   say "    Share them like house keys, not like flyers."
   say "──────────────────────────────────────────────"
   gap
