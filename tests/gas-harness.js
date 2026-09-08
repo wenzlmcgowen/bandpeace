@@ -50,6 +50,12 @@ class FakeRange {
   }
   setValue(v) { this.sheet._set(this.row, this.col, v); return this; }
   getValue() { return this.sheet._get(this.row, this.col); }
+  clearContent() {
+    for (let i = 0; i < this.numRows; i++) {
+      for (let j = 0; j < this.numCols; j++) this.sheet._set(this.row + i, this.col + j, '');
+    }
+    return this;
+  }
 }
 
 class FakeSheet {
@@ -127,7 +133,8 @@ function makeEnv(opts) {
       const ss = books.get(id);
       if (!ss) throw new Error('no such spreadsheet: ' + id);
       return ss;
-    }
+    },
+    _all() { return Array.from(books.values()); }
   };
 
   const store = new Map();
@@ -181,6 +188,7 @@ function loadEngine(tokens) {
   const src = raw
     .replace(/__PANDA_TOKEN__/g, tokens.board)
     .replace(/__SHOWS_TOKEN__/g, tokens.shows)
+    .replace(/__BOOKS_TOKEN__/g, tokens.books || '__BOOKS_TOKEN__')
     /* injected raw, exactly as setup-board.command does it */
     .replace(/__PANDA_TEAM__/g, JSON.stringify([['Wenzl', '🎷', 'yes'], ['Jess', '✨', 'yes']]));
 

@@ -47,10 +47,12 @@ OAuth-style flow (login happens on the provider's page; BandPeace receives a
 revocable read-only token) and then merely *simulates* the connection. Band
 basics typed in step 1 are stored in `localStorage` only.
 
-## The two hidden pages
+## The hidden pages
 
-`/hq/` (the Psycho Panda team board) and `/shows/` (Wenzl's shows and their
-travel / hotel / backstage logistics) are private pages on this public site.
+`/hq/` (the Psycho Panda team board), `/shows/` (Wenzl's shows and their
+travel / hotel / backstage logistics) and `/wenzl/` (WENZL's REAL books —
+the artist profile BandPeace preaches, private until Wenzl flips it open)
+are private pages on this public site.
 Neither holds any data: the real gate is the engine, which checks a key on
 every call and answers `{"ok":false,"error":"nope"}` to anything else.
 
@@ -67,9 +69,17 @@ per device. A full `#sh…` link still works: that's the same key written out.
 Signing in remembers the key on that device and *stops* putting it in the
 address bar.
 
-Both are served by **one** Apps Script deployment (`board-backend/Code.gs`) with
-**two different keys and two different private spreadsheets**, so the board link
-cannot open the shows and the shows link cannot open the board. One deployment
+**`/wenzl/` — same password idea as `/shows/`** (salt `bandpeace-books-v1`,
+prefix `bk`). The data is one JSON profile exported from the real QuickBooks
+by `qb_report.py` (category totals only — no transactions, no payees, no
+account numbers, Personal excluded) and published with
+`scripts/publish_books.py`. The page's `#demo` mode and local dev run on
+`demo-data.json` — practice numbers from Intuit's sandbox company, wearing a
+yellow PRACTICE banner the page derives from `meta.simulated`.
+
+All three are served by **one** Apps Script deployment (`board-backend/Code.gs`)
+with **three different keys and three different private spreadsheets**, so no
+leaked link opens any of the other pages. One deployment
 means one thing to set up and one Google "Allow" to click:
 `board-backend/setup-board.command`.
 

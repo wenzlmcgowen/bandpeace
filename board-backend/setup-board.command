@@ -47,6 +47,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 SECRETS_FILE="$HOME/workspace/founder-os/secrets/panda-board.env"
 SHOWS_SECRETS_FILE="$HOME/workspace/founder-os/secrets/shows.env"
+BOOKS_SECRETS_FILE="$HOME/workspace/founder-os/secrets/books.env"
 CLASP_STATE="$HOME/.panda-board-clasp.json"   # remembers WHICH engine is ours between runs
 DEPLOY_STATE="$HOME/.panda-board-deploy-id"   # remembers WHICH deployment, so re-runs update it in place
 
@@ -83,11 +84,22 @@ finish() {
     chmod 600 "$SHOWS_SECRETS_FILE"
   fi
 
+  # 1c) And the books key file (the /wenzl/ page).
+  if [ -f "$BOOKS_SECRETS_FILE" ]; then
+    local tmp_books
+    tmp_books="$(mktemp)"
+    sed "s|^BOOKS_URL=.*|BOOKS_URL=${exec_url}|" "$BOOKS_SECRETS_FILE" > "$tmp_books"
+    grep -q '^BOOKS_URL=' "$tmp_books" || printf 'BOOKS_URL=%s\n' "$exec_url" >> "$tmp_books"
+    cat "$tmp_books" > "$BOOKS_SECRETS_FILE"
+    rm -f "$tmp_books"
+    chmod 600 "$BOOKS_SECRETS_FILE"
+  fi
+
   # 2) Point BOTH pages at the engine (source and deployed copy of each).
   #    If a deployed copy is somehow missing, recreate it from the source copy
   #    rather than stranding you at the finish line.
   local page
-  for page in hq shows; do
+  for page in hq shows wenzl; do
     if [ ! -d "$REPO_DIR/docs/$page" ] && [ -d "$REPO_DIR/site/$page" ]; then
       mkdir -p "$REPO_DIR/docs/$page"
       cp "$REPO_DIR/site/$page/"* "$REPO_DIR/docs/$page/"
@@ -95,7 +107,8 @@ finish() {
   done
   local cfg
   for cfg in "$REPO_DIR/site/hq/config.js" "$REPO_DIR/docs/hq/config.js" \
-             "$REPO_DIR/site/shows/config.js" "$REPO_DIR/docs/shows/config.js"; do
+             "$REPO_DIR/site/shows/config.js" "$REPO_DIR/docs/shows/config.js" \
+             "$REPO_DIR/site/wenzl/config.js" "$REPO_DIR/docs/wenzl/config.js"; do
     if [ ! -f "$cfg" ]; then
       bail "🤔  I couldn't find $cfg" \
            "    Both page folders should exist before I run. Tell Claude and we'll sort it."
@@ -105,12 +118,12 @@ finish() {
 
   # 3) Publish just those page files to the live site — nothing else, even if
   #    other changes happen to be sitting around in the repo.
-  if [ -z "$(git -C "$REPO_DIR" status --porcelain -- site/hq docs/hq site/shows docs/shows)" ]; then
+  if [ -z "$(git -C "$REPO_DIR" status --porcelain -- site/hq docs/hq site/shows docs/shows site/wenzl docs/wenzl)" ]; then
     say "    (the site already had this address — nothing new to publish)"
   else
-    git -C "$REPO_DIR" add -- site/hq docs/hq site/shows docs/shows
+    git -C "$REPO_DIR" add -- site/hq docs/hq site/shows docs/shows site/wenzl docs/wenzl
     git -C "$REPO_DIR" commit -m "Connect the private pages to the engine" \
-        -- site/hq docs/hq site/shows docs/shows >/dev/null
+        -- site/hq docs/hq site/shows docs/shows site/wenzl docs/wenzl >/dev/null
     if git -C "$REPO_DIR" push >/dev/null 2>&1; then
       say "    Published. The live page catches up in a minute or two."
     else
@@ -137,8 +150,16 @@ finish() {
     say "        https://bandpeace.com/shows/#${SHOWS_TOKEN}"
     gap
   fi
-  say "    The two are different keys — the board link can't open your shows"
-  say "    and the shows link can't open the board."
+  if [ -n "${BOOKS_TOKEN:-}" ]; then
+    say "    💵  Your real books (the WENZL profile) — open this and type your password:"
+    say "        https://bandpeace.com/wenzl/"
+    gap
+    say "        Or skip the typing with this link, which is the same key"
+    say "        written out (treat it exactly like the password):"
+    say "        https://bandpeace.com/wenzl/#${BOOKS_TOKEN}"
+    gap
+  fi
+  say "    These are all different keys — no link opens any of the other pages."
   say "    Share them like house keys, not like flyers."
   say "──────────────────────────────────────────────"
   gap
@@ -208,6 +229,13 @@ probe_shows_ok() {
   printf '%s' "$out" | grep -q '"ok":true'
 }
 
+# Third lane, third key, same reasoning.
+probe_books_ok() {
+  local url="$1" out=""
+  out="$(curl -sL --max-time 30 "${url}?token=${BOOKS_TOKEN}&action=books" 2>/dev/null || true)"
+  printf '%s' "$out" | grep -q '"ok":true'
+}
+
 # clasp writes the absolute temp-folder path into .clasp.json as rootDir; that
 # folder is gone by the next run, which would strand every re-run (including a
 # key rotation). Pin rootDir to "." — we always run clasp from inside $WORKDIR.
@@ -265,6 +293,31 @@ if ! printf '%s' "$SHOWS_TOKEN" | grep -Eq '^sh[A-Za-z0-9]{40,}$'; then
 fi
 say "✅  Found the shows key too."
 
+# The books page (/wenzl/) has its OWN key, in its own file — same deal.
+if [ ! -f "$BOOKS_SECRETS_FILE" ]; then
+  mkdir -p "$(dirname "$BOOKS_SECRETS_FILE")"
+  NEW_BOOKS_TOKEN="bk$(LC_ALL=C tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 48)"
+  {
+    printf '# WENZL books page (bandpeace.com/wenzl/) — the key that IS the link.\n'
+    printf '# Never commit, never paste into a chat. To use a human password\n'
+    printf '# instead, derive the key with scripts/derive_books_key.py and put\n'
+    printf '# the result here.\n'
+    printf 'BOOKS_TOKEN=%s\n' "$NEW_BOOKS_TOKEN"
+    printf '# Filled in by setup-board.command once the engine is live:\n'
+    printf 'BOOKS_URL=\n'
+  } > "$BOOKS_SECRETS_FILE"
+  chmod 600 "$BOOKS_SECRETS_FILE"
+  unset NEW_BOOKS_TOKEN
+  say "✅  Made a fresh key for the books page (saved privately, never shown)."
+fi
+
+BOOKS_TOKEN="$(sed -n 's/^BOOKS_TOKEN=//p' "$BOOKS_SECRETS_FILE" | head -n 1 | tr -d '[:space:]')"
+if ! printf '%s' "$BOOKS_TOKEN" | grep -Eq '^bk[A-Za-z0-9]{40,}$'; then
+  bail "🔍  The books key file exists but the key inside looks off." \
+       "    Tell Claude: \"the books token looks wrong\" (don't paste the key anywhere)."
+fi
+say "✅  Found the books key too."
+
 # ---------------------------------------------------------------- step 2: temp copy
 STEP=2
 WORKDIR="$(mktemp -d)"
@@ -290,9 +343,10 @@ TEAM_JSON="$(TEAM_ROSTER="$TEAM_ROSTER" node -e '
 
 # Inject both keys and the roster via awk+ENVIRON so none of them ever appears
 # on a command line (command lines are visible to every process on the machine).
-BOARD_TOKEN="$BOARD_TOKEN" SHOWS_TOKEN="$SHOWS_TOKEN" TEAM_JSON="$TEAM_JSON" awk '{
+BOARD_TOKEN="$BOARD_TOKEN" SHOWS_TOKEN="$SHOWS_TOKEN" BOOKS_TOKEN="$BOOKS_TOKEN" TEAM_JSON="$TEAM_JSON" awk '{
   gsub(/__PANDA_TOKEN__/, ENVIRON["BOARD_TOKEN"]);
   gsub(/__SHOWS_TOKEN__/, ENVIRON["SHOWS_TOKEN"]);
+  gsub(/__BOOKS_TOKEN__/, ENVIRON["BOOKS_TOKEN"]);
   gsub(/__PANDA_TEAM__/, ENVIRON["TEAM_JSON"]);
   print
 }' "$SCRIPT_DIR/Code.gs" > "$WORKDIR/Code.gs"
@@ -441,6 +495,17 @@ else
   say "⚠️   The board works but the shows half didn't answer. Nothing is broken;"
   say "    run me again in a minute. If it keeps happening, tell Claude:"
   say "    \"the shows half of the engine isn't answering\"."
+fi
+
+gap
+say "🩺  And once more with the books key..."
+if probe_books_ok "$EXEC_URL"; then
+  say "✅  The books half answered too ('Wenzl Books (private)' — its own sheet,"
+  say "    empty until the books are published from the Mac mini)."
+else
+  say "⚠️   The books half didn't answer. Nothing is broken; run me again in a"
+  say "    minute. If it keeps happening, tell Claude:"
+  say "    \"the books half of the engine isn't answering\"."
 fi
 
 # ---------------------------------------------------------------- step 7: wire it all up

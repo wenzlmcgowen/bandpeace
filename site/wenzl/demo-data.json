@@ -1,0 +1,291 @@
+{
+  "meta": {
+    "generated": "2026-09-08",
+    "source": "quickbooks-sandbox",
+    "company": "Sandbox Company US 6cbd",
+    "simulated": true,
+    "basis": "cash",
+    "months": 4,
+    "years": [
+      2026
+    ],
+    "privacy": "Category totals only. No transactions, no vendor or payee names, no account numbers. The 'Personal' category is excluded entirely.",
+    "note": "PRACTICE DATA from a QuickBooks sandbox company \u2014 not real money."
+  },
+  "categories": [
+    "Design income",
+    "Discounts given",
+    "Fountains and Garden Lighting",
+    "Maintenance and Repair",
+    "Pest Control Services",
+    "Plants and Soil",
+    "Sales of Product Income",
+    "Services"
+  ],
+  "monthly": [
+    {
+      "year": 2026,
+      "month": 4,
+      "category": "Design income",
+      "amount": 225.0
+    },
+    {
+      "year": 2026,
+      "month": 5,
+      "category": "Design income",
+      "amount": 637.5
+    },
+    {
+      "year": 2026,
+      "month": 5,
+      "category": "Discounts given",
+      "amount": -8.75
+    },
+    {
+      "year": 2026,
+      "month": 4,
+      "category": "Fountains and Garden Lighting",
+      "amount": 422.0
+    },
+    {
+      "year": 2026,
+      "month": 5,
+      "category": "Fountains and Garden Lighting",
+      "amount": 406.8
+    },
+    {
+      "year": 2026,
+      "month": 2,
+      "category": "Plants and Soil",
+      "amount": 131.25
+    },
+    {
+      "year": 2026,
+      "month": 5,
+      "category": "Plants and Soil",
+      "amount": 1742.62
+    },
+    {
+      "year": 2026,
+      "month": 4,
+      "category": "Maintenance and Repair",
+      "amount": 25.61
+    },
+    {
+      "year": 2026,
+      "month": 5,
+      "category": "Maintenance and Repair",
+      "amount": 24.39
+    },
+    {
+      "year": 2026,
+      "month": 2,
+      "category": "Pest Control Services",
+      "amount": 70.0
+    },
+    {
+      "year": 2026,
+      "month": 4,
+      "category": "Pest Control Services",
+      "amount": 17.93
+    },
+    {
+      "year": 2026,
+      "month": 5,
+      "category": "Pest Control Services",
+      "amount": -82.93
+    },
+    {
+      "year": 2026,
+      "month": 5,
+      "category": "Sales of Product Income",
+      "amount": 44.0
+    },
+    {
+      "year": 2026,
+      "month": 5,
+      "category": "Services",
+      "amount": 503.55
+    }
+  ],
+  "expenses": [
+    {
+      "year": 2026,
+      "month": 2,
+      "amount": 300.0
+    },
+    {
+      "year": 2026,
+      "month": 3,
+      "amount": 408.08
+    },
+    {
+      "year": 2026,
+      "month": 4,
+      "amount": 260.65
+    },
+    {
+      "year": 2026,
+      "month": 5,
+      "amount": 2526.88
+    }
+  ],
+  "expense_categories": [
+    "Accounting",
+    "Advertising",
+    "Bookkeeper",
+    "Decks and Patios",
+    "Equipment Rental",
+    "Fuel",
+    "Gas and Electric",
+    "Lawyer",
+    "Maintenance and Repair",
+    "Meals and Entertainment",
+    "Office Expenses",
+    "Plants and Soil",
+    "Rent or Lease",
+    "Sprinklers and Drip Systems",
+    "Telephone"
+  ],
+  "expenses_by_category": [
+    {
+      "year": 2026,
+      "month": 5,
+      "category": "Advertising",
+      "amount": 74.86
+    },
+    {
+      "year": 2026,
+      "month": 4,
+      "category": "Fuel",
+      "amount": 116.56
+    },
+    {
+      "year": 2026,
+      "month": 5,
+      "category": "Fuel",
+      "amount": 232.85
+    },
+    {
+      "year": 2026,
+      "month": 5,
+      "category": "Equipment Rental",
+      "amount": 112.0
+    },
+    {
+      "year": 2026,
+      "month": 5,
+      "category": "Decks and Patios",
+      "amount": 234.04
+    },
+    {
+      "year": 2026,
+      "month": 3,
+      "category": "Plants and Soil",
+      "amount": 158.08
+    },
+    {
+      "year": 2026,
+      "month": 4,
+      "category": "Plants and Soil",
+      "amount": 89.09
+    },
+    {
+      "year": 2026,
+      "month": 5,
+      "category": "Plants and Soil",
+      "amount": 105.95
+    },
+    {
+      "year": 2026,
+      "month": 5,
+      "category": "Sprinklers and Drip Systems",
+      "amount": 215.66
+    },
+    {
+      "year": 2026,
+      "month": 3,
+      "category": "Accounting",
+      "amount": 250.0
+    },
+    {
+      "year": 2026,
+      "month": 5,
+      "category": "Accounting",
+      "amount": 75.0
+    },
+    {
+      "year": 2026,
+      "month": 4,
+      "category": "Bookkeeper",
+      "amount": 55.0
+    },
+    {
+      "year": 2026,
+      "month": 2,
+      "category": "Lawyer",
+      "amount": 300.0
+    },
+    {
+      "year": 2026,
+      "month": 5,
+      "category": "Lawyer",
+      "amount": 100.0
+    },
+    {
+      "year": 2026,
+      "month": 5,
+      "category": "Maintenance and Repair",
+      "amount": 185.0
+    },
+    {
+      "year": 2026,
+      "month": 5,
+      "category": "Meals and Entertainment",
+      "amount": 28.49
+    },
+    {
+      "year": 2026,
+      "month": 5,
+      "category": "Office Expenses",
+      "amount": 18.08
+    },
+    {
+      "year": 2026,
+      "month": 5,
+      "category": "Rent or Lease",
+      "amount": 900.0
+    },
+    {
+      "year": 2026,
+      "month": 5,
+      "category": "Gas and Electric",
+      "amount": 114.09
+    },
+    {
+      "year": 2026,
+      "month": 5,
+      "category": "Telephone",
+      "amount": 130.86
+    }
+  ],
+  "schedule_c": {
+    "2026": {
+      "year": 2026,
+      "gross_receipts": 4158.97,
+      "total_deductions": 3495.61,
+      "net_profit": 663.36,
+      "se_tax": 93.73,
+      "books_net": 663.36,
+      "meals_total": 0.0,
+      "meals_addback": 0.0,
+      "quarterly_set_aside": 40.02,
+      "lines": {
+        "27a": {
+          "label": "Other expenses",
+          "amount": 3495.61
+        }
+      }
+    }
+  }
+}

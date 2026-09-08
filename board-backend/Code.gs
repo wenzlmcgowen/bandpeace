@@ -26,6 +26,7 @@
  * TWO REALMS, ONE ENGINE
  * - The board (token 'pp…')   → the Psycho Panda team board  → sheet "Psycho Panda Board (private)"
  * - Shows  (token 'sh…')      → the /shows/ logistics page    → sheet "Shows & Logistics (private)"
+ * - Books  (token 'bk…')      → the /books/ money page       → sheet "Wenzl Books (private)"
  *   The two tokens are different secrets and open different spreadsheets, so a
  *   leaked shows link can never reach the board (and vice versa). The shows API
  *   lives at the bottom of this file under "SHOWS REALM"; everything above it is
@@ -57,6 +58,7 @@ function doGet(e) {
   return respond_(function () {
     var p = (e && e.parameter) || {};
     if (showsTokenOk_(p.token)) return showsGet_(p);
+    if (booksTokenOk_(p.token)) return booksGet_(p);
     if (!tokenOk_(p.token)) return nope_();
     var action = p.action || 'list';
     if (action === 'list') return listPayload_(getBoard_());
@@ -75,6 +77,7 @@ function doPost(e) {
     }
     if (!body || typeof body !== 'object') return fail_('bad json');
     if (showsTokenOk_(body.token)) return showsPost_(body);
+    if (booksTokenOk_(body.token)) return booksPost_(body);
     if (!tokenOk_(body.token)) return nope_();
 
     switch (body.action) {
@@ -999,6 +1002,155 @@ function itemRm_(id) {
     if (!hit) return fail_('no item with id ' + id);
     sheet.deleteRow(hit.row);
     return { ok: true, removed: id };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+// =====================================================================
+//  BOOKS REALM — the /books/ page's engine (Wenzl's real money, gated)
+// =====================================================================
+//
+//  Third independent lane on the same deployment, same isolation deal as
+//  the shows realm: its own secret ('bk…'), its own private spreadsheet
+//  ("Wenzl Books (private)"), nothing shared with the board or the shows.
+//  A leaked books link opens ONLY the books.
+//
+//  The data is one JSON document — the category-level profile exported
+//  from QuickBooks by qb_report.py (income + expenses by category and
+//  month, Schedule C estimate). No transactions, no payees, no account
+//  numbers ever reach this engine; the exporter already fenced them out.
+//
+//  Storage: the JSON is chunked across rows of a 'Data' tab (a cell holds
+//  at most 50k characters), with a tiny 'Meta' tab recording when and by
+//  what it was last updated.
+//
+//  API (token must be the books token):
+//    GET  <exec>?token=T&action=books
+//         → { ok:true, updated:"…", source:"…", profile:{…} }
+//    POST {"token":T,"action":"books-put","source":"qb_report.py","profile":{…}}
+//         → { ok:true, updated:"…", bytes:n }
+
+const BOOKS_TOKEN = '__BOOKS_TOKEN__';
+const BOOKS_TOKEN_FORMAT = /^bk[A-Za-z0-9]{40,}$/;
+const BOOKS_SPREADSHEET_NAME = 'Wenzl Books (private)';
+const BOOKS_CHUNK = 45000;              // safely under the 50k cell ceiling
+const BOOKS_MAX_BYTES = 2000000;        // one profile, not a data lake
+
+function booksTokenOk_(t) {
+  return typeof t === 'string' && BOOKS_TOKEN_FORMAT.test(t) && t === BOOKS_TOKEN;
+}
+
+// ------------------------------------------------------------ entry points
+
+function booksGet_(p) {
+  var action = p.action || 'books';
+  if (action === 'books') return booksPayload_();
+  return fail_('unknown action');
+}
+
+function booksPost_(body) {
+  switch (body.action) {
+    case 'books': return booksPayload_();
+    case 'books-put': return booksPut_(body);
+    default: return fail_('unknown action');
+  }
+}
+
+// ---------------------------------------------------------------- bootstrap
+
+/** The books spreadsheet, created on the first-ever valid books call. */
+function getBooksBook_() {
+  var props = PropertiesService.getScriptProperties();
+  var id = props.getProperty('BOOKS_SHEET_ID');
+  if (id) return SpreadsheetApp.openById(id);
+  var lock = lock_();
+  try {
+    return createBooksIfMissing_();
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/** Caller MUST hold the script lock. Idempotent. */
+function createBooksIfMissing_() {
+  var props = PropertiesService.getScriptProperties();
+  var id = props.getProperty('BOOKS_SHEET_ID');
+  if (id) return SpreadsheetApp.openById(id);
+
+  var ss = SpreadsheetApp.create(BOOKS_SPREADSHEET_NAME);
+  var data = ss.getSheets()[0];
+  data.setName('Data');
+  initTab_(data, ['chunk']);
+  var meta = ss.insertSheet('Meta');
+  initTab_(meta, ['updated', 'source', 'bytes']);
+
+  props.setProperty('BOOKS_SHEET_ID', ss.getId());
+  return ss;
+}
+
+// ------------------------------------------------------------------- read
+
+function booksPayload_() {
+  var ss = getBooksBook_();
+  var data = ss.getSheetByName('Data');
+  var last = data.getLastRow();
+  if (last < 2) return { ok: true, updated: null, source: null, profile: null };
+
+  var cells = data.getRange(2, 1, last - 1, 1).getValues();
+  var raw = '';
+  for (var i = 0; i < cells.length; i++) raw += String(cells[i][0]);
+
+  var profile;
+  try {
+    profile = JSON.parse(raw);
+  } catch (err) {
+    return fail_('stored profile is corrupt — publish it again');
+  }
+
+  var meta = ss.getSheetByName('Meta');
+  var m = meta.getLastRow() >= 2 ? meta.getRange(2, 1, 1, 3).getValues()[0] : ['', '', ''];
+  return { ok: true, updated: String(m[0] || ''), source: String(m[1] || ''), profile: profile };
+}
+
+// ------------------------------------------------------------------ write
+
+function booksPut_(body) {
+  var profile = body.profile;
+  if (!profile || typeof profile !== 'object' || Array.isArray(profile)) {
+    return fail_('profile must be an object');
+  }
+  if (!profile.meta || typeof profile.meta !== 'object') {
+    return fail_('profile has no meta block');
+  }
+  var raw = JSON.stringify(profile);
+  if (raw.length > BOOKS_MAX_BYTES) return fail_('profile too large');
+
+  var source = typeof body.source === 'string' ? body.source.slice(0, MAX_SHORT) : '';
+
+  var lock = lock_();
+  try {
+    var ss = createBooksIfMissing_();
+    var data = ss.getSheetByName('Data');
+
+    var chunks = [];
+    for (var i = 0; i < raw.length; i += BOOKS_CHUNK) {
+      chunks.push([raw.slice(i, i + BOOKS_CHUNK)]);
+    }
+
+    var lastRow = data.getLastRow();
+    if (lastRow >= 2) data.getRange(2, 1, lastRow - 1, 1).clearContent();
+    if (data.getMaxRows() < chunks.length + 1) {
+      data.insertRowsAfter(data.getMaxRows(), chunks.length + 1 - data.getMaxRows());
+      data.getRange(1, 1, data.getMaxRows(), 1).setNumberFormat('@');
+    }
+    data.getRange(2, 1, chunks.length, 1).setValues(chunks);
+
+    var meta = ss.getSheetByName('Meta');
+    var updated = nowIso_();
+    meta.getRange(2, 1, 1, 3).setValues([[updated, source, raw.length]]);
+
+    return { ok: true, updated: updated, bytes: raw.length };
   } finally {
     lock.releaseLock();
   }
